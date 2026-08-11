@@ -1,0 +1,45 @@
+# Generated arm caches. Rebuilt in ~1 minute by
+# code/scripts/00_prepare_data.py, and they are derived from data we cannot
+# redistribute anyway.
+data/processed/
+
+# Third-party raw data that is not ours to redistribute:
+# choices13k is CC BY-NC-SA, the CPC18 full raw release is a separate download.
+# See data/external/ATTRIBUTION.md for where to get each.
+data/choices13k*/
+data/cpc18_raw/
+data/2571510/
+data/321652/
+data/845873/
+*.zip
+
+# Per-run training artefacts: 2,240 directories of .npz, ~32 MB, fully
+# reproducible from code/scripts/01_run_grid.py. Everything downstream reads
+# the aggregated tables instead, so nothing here needs to be shared.
+results/runs/
+
+# Working copies of the figures. The versions that matter are committed under
+# paper_results/, which 10_main_figures.py assembles.
+results/figures/
+
+# Large intermediate tables (per-run records, not manuscript tables). The
+# numbered manuscript tables under paper_results/tables/ are committed.
+results/tables/theory_coords.csv
+results/tables/indices.csv
+results/tables/sr_expressions.csv
+results/tables/probe_level_omega2.csv
+results/runs_*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

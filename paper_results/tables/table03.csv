@@ -1,0 +1,12 @@
+value,n,omega2_dataset,omega2_arch,omega2_interaction,eta2_dataset,eta2_arch,eta2_interaction,eta2_error,screen,dropped_archs
+alpha,255,0.367,0.803,0.290,0.098,0.676,0.079,0.147,theory_identifiable,LINEAR
+beta,255,0.360,0.487,0.293,0.196,0.333,0.166,0.305,theory_identifiable,LINEAR
+lam,255,0.314,0.211,0.443,0.186,0.116,0.344,0.354,theory_identifiable,LINEAR
+gamma_pos,255,0.519,0.453,0.505,0.278,0.217,0.278,0.227,theory_identifiable,LINEAR
+gamma_neg,255,0.287,0.044,0.360,0.207,0.035,0.315,0.444,theory_identifiable,LINEAR
+tau,255,0.628,0.764,0.412,0.257,0.493,0.116,0.134,theory_identifiable,LINEAR
+rare_event_index,309,0.694,0.497,0.351,0.475,0.210,0.127,0.187,identifiable,
+certainty_index,309,0.689,0.485,0.560,0.410,0.178,0.247,0.165,identifiable,
+reflection_index,309,0.103,0.560,0.533,0.035,0.367,0.343,0.254,identifiable,
+loss_aversion_kappa,309,0.231,0.244,0.072,0.183,0.203,0.086,0.528,identifiable,
+ev_consistency,309,0.230,0.695,0.434,0.071,0.531,0.192,0.206,identifiable,

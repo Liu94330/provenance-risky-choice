@@ -1,0 +1,17 @@
+dataset,arch,mean,std
+c13k_pair_desc,CPT_NET,0.0568,0.0003
+c13k_pair_desc,GBT,0.0083,0.0
+c13k_pair_desc,LINEAR,0.0516,0.0039
+c13k_pair_desc,MLP_L,0.0773,0.0107
+c13k_pair_desc,MLP_S,0.0819,0.0235
+c13k_pair_desc,RESMLP,0.0735,0.013
+c13k_pair_desc,SET,0.1195,0.0132
+c13k_pair_desc,TRANSFORMER,0.1129,0.015
+c13k_pair_exp,CPT_NET,-0.0005,0.0004
+c13k_pair_exp,GBT,-0.0198,0.0
+c13k_pair_exp,LINEAR,0.0207,0.005
+c13k_pair_exp,MLP_L,-0.0005,0.0338
+c13k_pair_exp,MLP_S,-0.0455,0.0214
+c13k_pair_exp,RESMLP,-0.0038,0.0431
+c13k_pair_exp,SET,0.1022,0.0087
+c13k_pair_exp,TRANSFORMER,0.0623,0.021

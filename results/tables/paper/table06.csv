@@ -1,0 +1,6 @@
+,alpha,alpha,beta,beta,lam,lam,gamma_pos,gamma_pos,gamma_neg,gamma_neg,tau,tau
+,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std
+dataset,,,,,,,,,,,,
+syn_c13k,0.803,0.062,1.110,0.285,2.999,1.311,0.603,0.083,0.707,0.142,4.486,1.692
+syn_cpc,0.786,0.112,1.169,0.274,2.437,1.218,0.597,0.130,0.765,0.316,3.507,1.684
+generating agent,,,,,,,,,,,,

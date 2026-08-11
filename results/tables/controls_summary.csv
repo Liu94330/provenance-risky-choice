@@ -1,0 +1,4 @@
+dataset,subsample_n,reweight_to,alpha,beta,lam,gamma_pos,gamma_neg,tau,rare_event_index
+c13k_desc,182.0,,0.788,0.953,1.18,0.589,0.538,5.276,0.085
+c13k_exp,182.0,,0.846,0.967,1.215,0.767,0.903,6.568,0.032
+c13k_exp,,cpc18_exp,0.75,0.646,0.984,0.81,0.791,7.839,0.003

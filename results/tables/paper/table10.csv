@@ -1,0 +1,5 @@
+,alpha,alpha,beta,beta,lam,lam,gamma_pos,gamma_pos,gamma_neg,gamma_neg,tau,tau,rare_event_index,rare_event_index,certainty_index,certainty_index,reflection_index,reflection_index,loss_aversion_kappa,loss_aversion_kappa,ev_consistency,ev_consistency
+,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std,mean,std
+dataset,,,,,,,,,,,,,,,,,,,,,,
+cpc18_rehovot_exp,0.742,0.138,0.772,0.209,0.991,0.279,0.912,0.282,0.947,0.240,10.613,5.904,-0.042,0.047,-0.055,0.113,0.125,0.111,1.185,0.488,0.796,0.096
+cpc18_technion_exp,0.745,0.113,0.798,0.209,1.054,0.281,0.837,0.189,1.010,0.356,14.015,7.141,-0.029,0.041,-0.003,0.106,0.183,0.157,1.207,0.610,0.818,0.103

@@ -1,0 +1,6 @@
+probe_sd_threshold,n_runs,median_omega2_dataset,median_omega2_arch,n_readouts_dataset_wins,dropped_archs
+0.000,320,0.261,0.482,3,
+0.010,317,0.256,0.506,3,
+0.020,309,0.231,0.497,2,
+0.050,290,0.340,0.502,2,LINEAR
+0.100,285,0.350,0.496,2,LINEAR

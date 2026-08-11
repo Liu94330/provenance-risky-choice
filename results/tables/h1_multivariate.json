@@ -1,0 +1,28 @@
+{
+  "identifiable": {
+    "permanova_dataset": {
+      "pseudo_F": 17.787433831331484,
+      "p_value": 0.0004997501249375312
+    },
+    "permanova_arch": {
+      "pseudo_F": 27.176408750515137,
+      "p_value": 0.0004997501249375312
+    },
+    "silhouette_by_dataset": 0.05848096682813908,
+    "silhouette_by_arch": 0.13557322447510828,
+    "n": 309
+  },
+  "all_runs": {
+    "permanova_dataset": {
+      "pseudo_F": 19.474332356573107,
+      "p_value": 0.0004997501249375312
+    },
+    "permanova_arch": {
+      "pseudo_F": 24.068554128779493,
+      "p_value": 0.0004997501249375312
+    },
+    "silhouette_by_dataset": 0.05712617837250232,
+    "silhouette_by_arch": 0.11551268982334702,
+    "n": 320
+  }
+}

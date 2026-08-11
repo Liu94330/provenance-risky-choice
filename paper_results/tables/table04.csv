@@ -1,0 +1,9 @@
+screen,dataset,CPT_NET,GBT,LINEAR,MLP_L,MLP_S,RESMLP,SET,TRANSFORMER
+identifiable,c13k_desc,10/10,10/10,10/10,10/10,10/10,10/10,10/10,10/10
+identifiable,c13k_exp,10/10,10/10,10/10,10/10,10/10,10/10,10/10,10/10
+identifiable,cpc18_desc,10/10,10/10,9/10,8/10,5/10,10/10,9/10,10/10
+identifiable,cpc18_exp,10/10,10/10,9/10,10/10,10/10,10/10,10/10,9/10
+theory_identifiable,c13k_desc,10/10,10/10,10/10,10/10,10/10,10/10,9/10,10/10
+theory_identifiable,c13k_exp,10/10,10/10,10/10,10/10,10/10,10/10,10/10,7/10
+theory_identifiable,cpc18_desc,10/10,10/10,1/10,7/10,3/10,6/10,9/10,9/10
+theory_identifiable,cpc18_exp,10/10,10/10,0/10,10/10,10/10,9/10,10/10,6/10

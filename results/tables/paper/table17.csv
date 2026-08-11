@@ -1,0 +1,5 @@
+n_subj,min_n_problems_within_0.1,best_error
+8,,0.138
+16,,0.191
+32,,0.196
+128,,0.194

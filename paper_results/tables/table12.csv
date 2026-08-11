@@ -1,0 +1,7 @@
+group,omega2_dataset_mean,omega2_dataset_count,omega2_arch_mean,diff_mean
+ce_gain,0.341,840,0.573,-0.232
+ce_loss,0.342,840,0.625,-0.282
+la_ladder,0.331,12,0.633,-0.301
+ladder_gain,0.439,15,0.426,0.013
+ladder_loss,0.446,15,0.476,-0.030
+mixed,0.372,20,0.625,-0.254

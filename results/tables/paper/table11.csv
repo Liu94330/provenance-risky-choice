@@ -1,0 +1,6 @@
+subset,level,dim,r2_dataset,r2_arch,ratio
+theory screen (n=276),raw probe responses,1742,0.195,0.434,0.450
+theory screen (n=276),behavioural indices,5,0.241,0.348,0.692
+theory screen (n=276),CPT coordinates,6,0.204,0.313,0.653
+behaviour screen (n=309),raw probe responses,1742,0.149,0.387,0.385
+behaviour screen (n=309),behavioural indices,5,0.231,0.296,0.782

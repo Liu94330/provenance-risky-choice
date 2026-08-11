@@ -33,7 +33,8 @@ from src.models import make_model
 from src.paths import TABLES
 from src.probes import build_probe_battery
 from src.shap_readout import (FEATURE_GROUPS, FLAT_ARCHS,
-                              attribution_fingerprint)
+                              attribution_fingerprint,
+                              conditional_attribution)
 
 MAIN = ["c13k_exp", "c13k_desc", "cpc18_exp", "cpc18_desc"]
 # Fixed-agent arms: the generating theory is identical across every run, so
@@ -42,8 +43,23 @@ FLOOR_ARMS = ["suf_p250_n16", "suf_p250_n128", "suf_p1000_n16",
               "suf_p1000_n128"]
 
 
-def fingerprints(arms, archs, seeds, probe_arrs, label):
-    rows = []
+# Probability bands for the conditional analysis. Rare events are where the
+# description-experience gap lives, so that is where a strategy switch would
+# matter most.
+P_BANDS = [(0.0, 0.06, "rare (p<=.05)"), (0.06, 0.35, "low (.1-.3)"),
+           (0.35, 0.75, "mid (.5-.7)"), (0.75, 1.01, "high (p>=.8)")]
+
+
+def _band(p):
+    for lo, hi, name in P_BANDS:
+        if lo <= p < hi:
+            return name
+    return P_BANDS[-1][2]
+
+
+def fingerprints(arms, archs, seeds, probe_arrs, probe_meta, label,
+                 conditional=False):
+    rows, cond = [], []
     jobs = [(d, a, s) for d in arms for a in archs for s in range(seeds)]
     for d, a, s in tqdm(jobs, desc=label):
         arrs = load_arm(d)
@@ -55,7 +71,19 @@ def fingerprints(arms, archs, seeds, probe_arrs, label):
         rows.append(dict(dataset=d, arch=a, seed=s,
                          **{f"attr_{k}": v for k, v in norm.items()},
                          **{f"raw_{k}": v for k, v in raw.items()}))
-    return pd.DataFrame(rows)
+        if conditional:
+            ca = conditional_attribution(model, probe_arrs, tr, probe_meta,
+                                         n_rows=400, seed=s)
+            ca = ca[ca["probe_group"].isin(["ce_gain", "ce_loss"])].copy()
+            ca["band"] = ca["p"].map(_band)
+            ca["domain"] = np.where(ca["probe_group"] == "ce_gain",
+                                    "gains", "losses")
+            g = (ca.groupby(["feature_group", "band", "domain"])["shap"]
+                 .mean().reset_index())
+            g["dataset"], g["arch"], g["seed"] = d, a, s
+            cond.append(g)
+    return pd.DataFrame(rows), (pd.concat(cond, ignore_index=True)
+                                if cond else None)
 
 
 if __name__ == "__main__":
@@ -65,18 +93,22 @@ if __name__ == "__main__":
     ap.add_argument("--floor-seeds", type=int, default=3)
     args = ap.parse_args()
 
-    probe_arrs, _ = build_probe_battery()
+    probe_arrs, probe_meta = build_probe_battery()
     archs = list(FLAT_ARCHS)
     print(f"architectures with a flat 55-d input: {archs}")
     print("(SET / TRANSFORMER / CPT_NET read per-outcome slots, so these "
           "feature groups do not exist for them)\n")
 
-    real = fingerprints(MAIN, archs, args.seeds, probe_arrs, "main arms")
-    floor = fingerprints(FLOOR_ARMS, archs, args.floor_seeds, probe_arrs,
-                         "fixed-agent arms")
+    real, cond = fingerprints(MAIN, archs, args.seeds, probe_arrs, probe_meta,
+                              "main arms", conditional=True)
+    floor, _ = fingerprints(FLOOR_ARMS, archs, args.floor_seeds, probe_arrs,
+                            probe_meta, "fixed-agent arms")
     os.makedirs(TABLES, exist_ok=True)
     real.to_csv(os.path.join(TABLES, "attribution_fingerprints.csv"),
                 index=False)
+    if cond is not None:
+        cond.to_csv(os.path.join(TABLES, "attribution_conditional.csv"),
+                    index=False)
 
     # variance decomposition on the observed arms, and the same quantity on
     # arms where nothing about the generating process differs
@@ -111,5 +143,34 @@ if __name__ == "__main__":
     print(f"Clearing their own artifact floor -- provenance "
           f"{int(dec['dataset_clears'].sum())}/{len(dec)}, architecture "
           f"{int(dec['arch_clears'].sum())}/{len(dec)}")
-    print(f"\nwrote {TABLES}/attribution_fingerprints.csv and "
-          f"attribution_decomposition.csv")
+    # Cross-check against the CPT readout. The two are computed by entirely
+    # different routes, so agreement is evidence for both and disagreement
+    # says at least one is not measuring what it claims.
+    tc = os.path.join(TABLES, "theory_coords.csv")
+    if os.path.exists(tc):
+        co = pd.read_csv(tc)
+        co = co[co["theory_identifiable"]]
+        key = ["dataset", "arch", "seed"]
+        m = real.merge(co[key + ["lam", "tau", "gamma_pos", "alpha"]],
+                       on=key, how="inner")
+        pairs = [("attr_P(loss) of B", "lam", "loss aversion"),
+                 ("attr_EV difference", "tau", "choice determinism"),
+                 ("attr_SD of B", "gamma_pos", "probability weighting"),
+                 ("attr_extremes of B", "alpha", "outcome curvature")]
+        rows = []
+        for acol, ccol, why in pairs:
+            if acol in m.columns and len(m) > 3:
+                r = m[acol].corr(m[ccol], method="spearman")
+                rows.append(dict(attribution=acol.replace("attr_", ""),
+                                 cpt_parameter=ccol, expected_link=why,
+                                 spearman_rho=r, n=len(m)))
+        if rows:
+            cross = pd.DataFrame(rows)
+            cross.to_csv(os.path.join(TABLES, "attribution_vs_cpt.csv"),
+                         index=False)
+            print("\nCross-check: attribution vs the CPT readout "
+                  f"(n={len(m)} models)")
+            print(cross.round(3).to_string(index=False))
+
+    print(f"\nwrote attribution_fingerprints / _decomposition / "
+          f"_conditional / _vs_cpt to {TABLES}")

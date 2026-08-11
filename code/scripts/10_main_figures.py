@@ -66,6 +66,9 @@ SUPP_FIGS = [
      "sensitivity"),
     ("figS7_attribution", "fig_attribution",
      "Attribution readout: which parts of a gamble each network relies on"),
+    ("figS8_attribution_probe_level", "fig_attribution_rich",
+     "Per-probe Shapley values: beeswarm, dependence, conditional map and the "
+     "cross-check against the CPT readout"),
 ]
 
 

@@ -72,18 +72,25 @@ def predict_flat(model, X, batch=8192):
     return np.concatenate(out).astype(float)
 
 
-def grouped_shapley(model, X, baseline, groups=None):
-    """Exact Shapley value of each feature group, averaged over rows of X.
+def grouped_shapley(model, X, baseline, groups=None, per_sample=False):
+    """Exact Shapley value of each feature group.
 
-    Returns {group: value}. Values sum to mean(f(X)) - f(baseline), which the
-    caller can check -- efficiency is the property that makes these comparable
-    across architectures.
+    The coalition values are kept per row rather than averaged, so the same
+    enumeration yields either the mean attribution or the full [n_rows] vector
+    per group at no extra cost. The per-row form is what dependence and
+    conditional analyses need: averaging first throws away the fact that a
+    model can lean on expected value in one region of probability space and on
+    the loss probability in another.
+
+    per_sample=False -> {group: float}, summing to mean(f(X)) - f(baseline)
+    per_sample=True  -> {group: array[n_rows]}, each row summing to
+                        f(x) - f(baseline) for that row
     """
     groups = groups or FEATURE_GROUPS
     keys = list(groups)
     G = len(keys)
 
-    # v(S) for every coalition, evaluated once and cached
+    # v(S) per row for every coalition, evaluated once and cached
     v = {}
     for r in range(G + 1):
         for S in combinations(range(G), r):
@@ -91,18 +98,48 @@ def grouped_shapley(model, X, baseline, groups=None):
             for gi in S:
                 cols = groups[keys[gi]]
                 Z[:, cols] = X[:, cols]
-            v[S] = float(predict_flat(model, Z).mean())
+            v[S] = predict_flat(model, Z)
 
     shap = {}
     for gi, k in enumerate(keys):
         rest = [j for j in range(G) if j != gi]
-        total = 0.0
+        total = np.zeros(len(X))
         for r in range(G):
             w = factorial(r) * factorial(G - r - 1) / factorial(G)
             for S in combinations(rest, r):
                 total += w * (v[tuple(sorted(S + (gi,)))] - v[S])
-        shap[k] = total
+        shap[k] = total if per_sample else float(total.mean())
     return shap
+
+
+def conditional_attribution(model, arrs, train_arrs, probe_meta,
+                            groups=None, n_rows=None, seed=0):
+    """Per-probe attributions joined to what each probe is testing.
+
+    Returns a tidy frame with one row per (probe, feature group): the Shapley
+    value, the probe family, its stated probability and CE ratio. This is what
+    makes it possible to ask whether a network switches strategy across
+    probability space rather than reporting one number for the whole battery.
+    """
+    import pandas as pd
+
+    X = flat_features(arrs)
+    idx = np.arange(len(X))
+    if n_rows and len(X) > n_rows:
+        idx = np.random.default_rng(seed).choice(len(X), n_rows,
+                                                 replace=False)
+        X = X[idx]
+    baseline = flat_features(train_arrs).mean(0)
+    sv = grouped_shapley(model, X, baseline, groups, per_sample=True)
+
+    meta = probe_meta.iloc[idx].reset_index(drop=True)
+    out = []
+    for k, vals in sv.items():
+        out.append(pd.DataFrame(dict(
+            feature_group=k, shap=vals, probe_group=meta["group"].to_numpy(),
+            p=meta["p"].to_numpy(), r=meta["r"].to_numpy(),
+            x=meta["x"].to_numpy())))
+    return pd.concat(out, ignore_index=True)
 
 
 def attribution_fingerprint(model, arrs, train_arrs, groups=None,

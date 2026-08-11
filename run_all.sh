@@ -34,4 +34,5 @@ python code/scripts/06_analyze.py
 python code/scripts/07_figures.py
 python code/scripts/08_paper_outputs.py
 python code/scripts/11_attribution.py
+python code/scripts/12_attribution_figure.py
 python code/scripts/10_main_figures.py

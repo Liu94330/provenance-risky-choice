@@ -1,0 +1,5 @@
+attribution,cpt_parameter,expected_link,spearman_rho,n
+P(loss) of B,lam,loss aversion,0.3049500291578055,155
+EV difference,tau,choice determinism,0.27555331370335956,155
+SD of B,gamma_pos,probability weighting,0.0915954015442623,155
+extremes of B,alpha,outcome curvature,-0.3618579188638191,155

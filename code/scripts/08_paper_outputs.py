@@ -480,6 +480,21 @@ if __name__ == "__main__":
               "interval lies strictly above the floor interval -- comparing "
               "point estimates alone would not support the claim.", index=True)
 
+    adp = os.path.join(tabdir, "attribution_decomposition.csv")
+    if os.path.exists(adp):
+        T.add(pd.read_csv(adp).set_index("feature_group"),
+              "Attribution readout: variance decomposition of exact grouped "
+              "Shapley values.",
+              "A fourth readout that assumes no functional form -- it asks "
+              "only how much the prediction moves when a group of input "
+              "features is withheld. Shapley values are exact over eleven "
+              "semantic groups (all 2^11 coalitions enumerated), not sampled, "
+              "so architectures are comparable without approximation noise. "
+              "Covers the five architectures that consume the flat 55-d "
+              "encoding; SET, TRANSFORMER and CPT_NET read per-outcome slots, "
+              "for which these groups do not exist. Note the artifact floors "
+              "are far higher here than for the other readouts.")
+
     T.write(os.path.join(paperdir, "TABLES.md"),
             "Paper tables -- provenance vs architecture")
     print(f"\nwrote {T.n} tables -> {paperdir}")

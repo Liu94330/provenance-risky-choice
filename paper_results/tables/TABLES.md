@@ -331,24 +331,52 @@ _NaN means no swept size reached the tolerance at that respondent count -- which
 
 _On the fixed-agent arms every run shares the same true coordinates, so any omega^2 still reported is produced by the readout itself. Each observed effect is compared with the floor for its own factor, because architecture perturbs the prediction surface directly and has a much higher floor than swapping the problem pool does._
 
-| value     |   arch_observed |   arch_artifact_floor |   arch_excess | arch_survives   |   dataset_observed |   dataset_artifact_floor |   dataset_excess | dataset_survives   |
-|:----------|----------------:|----------------------:|--------------:|:----------------|-------------------:|-------------------------:|-----------------:|:-------------------|
-| alpha     |          0.8028 |                0.7506 |        0.0522 | True            |             0.3667 |                   0.0617 |           0.3051 | True               |
-| beta      |          0.4869 |                0.7825 |       -0.2956 | False           |             0.3596 |                   0.0552 |           0.3043 | True               |
-| lam       |          0.2113 |                0.6673 |       -0.456  | False           |             0.3139 |                   0.0477 |           0.2662 | True               |
-| gamma_pos |          0.453  |                0.5965 |       -0.1434 | False           |             0.5194 |                   0      |           0.5194 | True               |
-| gamma_neg |          0.0438 |                0.4902 |       -0.4464 | False           |             0.2874 |                   0.0785 |           0.209  | True               |
-| tau       |          0.7643 |                0.9804 |       -0.2161 | False           |             0.628  |                   0.1313 |           0.4967 | True               |
+| value               |   arch_observed |   arch_artifact_floor |   arch_excess | arch_survives   |   dataset_observed |   dataset_artifact_floor |   dataset_excess | dataset_survives   |
+|:--------------------|----------------:|----------------------:|--------------:|:----------------|-------------------:|-------------------------:|-----------------:|:-------------------|
+| alpha               |          0.8028 |                0.7506 |        0.0522 | True            |             0.3667 |                   0.0617 |           0.3051 | True               |
+| beta                |          0.4869 |                0.7825 |       -0.2956 | False           |             0.3596 |                   0.0552 |           0.3043 | True               |
+| lam                 |          0.2113 |                0.6673 |       -0.456  | False           |             0.3139 |                   0.0477 |           0.2662 | True               |
+| gamma_pos           |          0.453  |                0.5965 |       -0.1434 | False           |             0.5194 |                   0      |           0.5194 | True               |
+| gamma_neg           |          0.0438 |                0.4902 |       -0.4464 | False           |             0.2874 |                   0.0785 |           0.209  | True               |
+| tau                 |          0.7643 |                0.9804 |       -0.2161 | False           |             0.628  |                   0.1313 |           0.4967 | True               |
+| rare_event_index    |          0.4965 |                0.7507 |       -0.2541 | False           |             0.6941 |                   0.2301 |           0.464  | True               |
+| certainty_index     |          0.4854 |                0.371  |        0.1144 | True            |             0.6888 |                   0.0632 |           0.6255 | True               |
+| reflection_index    |          0.5596 |                0.731  |       -0.1714 | False           |             0.1026 |                   0.0022 |           0.1004 | True               |
+| loss_aversion_kappa |          0.2439 |                0.7239 |       -0.4799 | False           |             0.2314 |                   0      |           0.2314 | True               |
+| ev_consistency      |          0.6955 |                0.8003 |       -0.1048 | False           |             0.2304 |                   0.1137 |           0.1166 | True               |
 
 ## Table 19. Bootstrap 95% intervals for each effect and its artifact floor.
 
 _400 resamples within design cells, so every replicate keeps a balanced design. `clears` is True only when the observed interval lies strictly above the floor interval -- comparing point estimates alone would not support the claim._
 
-| value     |   arch_lo |   arch_hi |   arch_floor_lo |   arch_floor_hi | arch_clears   |   ds_lo |   ds_hi |   ds_floor_lo |   ds_floor_hi | ds_clears   |
-|:----------|----------:|----------:|----------------:|----------------:|:--------------|--------:|--------:|--------------:|--------------:|:------------|
-| alpha     |    0.7834 |    0.8603 |          0.7653 |          0.8943 | False         |  0.2882 |  0.5101 |        0.0264 |        0.1228 | True        |
-| beta      |    0.385  |    0.654  |          0.6959 |          0.8103 | False         |  0.2861 |  0.5413 |        0.0256 |        0.1006 | True        |
-| lam       |    0.1523 |    0.3773 |          0.677  |          0.8378 | False         |  0.2585 |  0.4624 |        0.011  |        0.0846 | True        |
-| gamma_pos |    0.3851 |    0.6482 |          0.5745 |          0.8432 | False         |  0.4567 |  0.6774 |        0      |        0.0094 | True        |
-| gamma_neg |    0      |    0.2694 |          0.4668 |          0.898  | False         |  0.2368 |  0.4512 |        0.0501 |        0.2173 | True        |
-| tau       |    0.7061 |    0.8631 |          0.9837 |          0.9913 | False         |  0.519  |  0.7834 |        0.0878 |        0.2563 | True        |
+| value               | family            |   arch_lo |   arch_hi |   arch_floor_lo |   arch_floor_hi | arch_clears   |   ds_lo |   ds_hi |   ds_floor_lo |   ds_floor_hi | ds_clears   |
+|:--------------------|:------------------|----------:|----------:|----------------:|----------------:|:--------------|--------:|--------:|--------------:|--------------:|:------------|
+| alpha               | CPT coordinate    |    0.7834 |    0.8603 |          0.7653 |          0.8943 | False         |  0.2882 |  0.5101 |        0.0264 |        0.1228 | True        |
+| beta                | CPT coordinate    |    0.385  |    0.654  |          0.6959 |          0.8103 | False         |  0.2861 |  0.5413 |        0.0256 |        0.1006 | True        |
+| lam                 | CPT coordinate    |    0.1523 |    0.3773 |          0.677  |          0.8378 | False         |  0.2585 |  0.4624 |        0.011  |        0.0846 | True        |
+| gamma_pos           | CPT coordinate    |    0.3851 |    0.6482 |          0.5745 |          0.8432 | False         |  0.4567 |  0.6774 |        0      |        0.0094 | True        |
+| gamma_neg           | CPT coordinate    |    0      |    0.2694 |          0.4668 |          0.898  | False         |  0.2368 |  0.4512 |        0.0501 |        0.2173 | True        |
+| tau                 | CPT coordinate    |    0.7061 |    0.8631 |          0.9837 |          0.9913 | False         |  0.519  |  0.7834 |        0.0878 |        0.2563 | True        |
+| rare_event_index    | behavioural index |    0.4505 |    0.6131 |          0.7778 |          0.8734 | False         |  0.6813 |  0.769  |        0.1968 |        0.3611 | True        |
+| certainty_index     | behavioural index |    0.3786 |    0.6188 |          0.3487 |          0.5069 | False         |  0.6411 |  0.7967 |        0.0405 |        0.1293 | True        |
+| reflection_index    | behavioural index |    0.4248 |    0.6145 |          0.7558 |          0.836  | False         |  0.0096 |  0.1666 |        0      |        0.0089 | True        |
+| loss_aversion_kappa | behavioural index |    0.2413 |    0.4885 |          0.6604 |          0.8179 | False         |  0.2715 |  0.5029 |        0      |        0.0138 | True        |
+| ev_consistency      | behavioural index |    0.6722 |    0.7954 |          0.8039 |          0.8907 | False         |  0.0889 |  0.2406 |        0.0985 |        0.2246 | False       |
+
+## Table 20. Attribution readout: variance decomposition of exact grouped Shapley values.
+
+_A fourth readout that assumes no functional form -- it asks only how much the prediction moves when a group of input features is withheld. Shapley values are exact over eleven semantic groups (all 2^11 coalitions enumerated), not sampled, so architectures are comparable without approximation noise. Covers the five architectures that consume the flat 55-d encoding; SET, TRANSFORMER and CPT_NET read per-outcome slots, for which these groups do not exist. Note the artifact floors are far higher here than for the other readouts._
+
+| feature_group   |   omega2_dataset |   omega2_arch |   arch_artifact_floor |   dataset_artifact_floor | arch_clears   | dataset_clears   |
+|:----------------|-----------------:|--------------:|----------------------:|-------------------------:|:--------------|:-----------------|
+| A outcomes      |           0.1662 |        0.6223 |                0.1758 |                   0.3545 | True          | False            |
+| B outcomes      |           0.1357 |        0.1322 |                0.4455 |                   0.6646 | False         | False            |
+| A summary       |           0.4479 |        0.5922 |                0.4321 |                   0.5465 | True          | False            |
+| EV of B         |           0.3584 |        0.3739 |                0.5893 |                   0.27   | False         | True             |
+| SD of B         |           0.3264 |        0.2471 |                0.8649 |                   0.4018 | False         | False            |
+| extremes of B   |           0.305  |        0.3781 |                0.1197 |                   0.1802 | True          | True             |
+| P(loss) of B    |           0.3566 |        0.6228 |                0.9343 |                   0.1995 | False         | True             |
+| n outcomes B    |           0      |        0.1039 |                0.3808 |                   0.4425 | False         | False            |
+| EV difference   |           0.8813 |        0.5159 |                0.532  |                   0.0193 | False         | True             |
+| SD difference   |           0.1036 |        0.1314 |                0.4194 |                   0.1933 | False         | False            |
+| correlation     |           0.038  |        0.0596 |                0.2361 |                   0      | False         | True             |

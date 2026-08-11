@@ -8,3 +8,4 @@ tqdm>=4.65
 gplearn>=0.4.2
 # optional, higher-quality symbolic regression:
 # pysr>=0.18
+shap>=0.44

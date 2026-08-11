@@ -19,8 +19,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from .figures import (ARCH_MARKERS, DATASET_COLORS, DATASET_LABELS, FAINT,
-                      INK, MUTED, RC, _panel_tag, _pname, _save)
+from .figures import (ARCH_MARKERS, DATASET_COLORS, DATASET_LABELS,
+                      DATASET_SHORT, FAINT, INK, MUTED, RC, _panel_tag,
+                      _pname, _save)
 from .problems import SCALE, prelec_w
 
 PROBE_GROUP_LABELS = {
@@ -880,3 +881,91 @@ def fig15_artifact_floor(ac, figdir):
                  ha="center", va="top", fontsize=6.4, color=MUTED)
         fig.tight_layout(w_pad=2.0)
         _save(fig, figdir, "fig15_artifact_floor.pdf")
+
+
+def fig_attribution(fp, dec, figdir):
+    """Attribution readout: which parts of a gamble each network relies on.
+
+    The only readout here that assumes no functional form -- it asks how much
+    the prediction moves when part of the input is withheld, nothing more. The
+    Shapley values are exact over eleven semantic feature groups rather than
+    sampled over 55 raw features, so architectures are comparable without an
+    approximation-noise caveat.
+
+    Panel c is the honest part: attribution has a much higher artifact floor
+    than the other readouts, and only some groups clear it.
+    """
+    attr = [c for c in fp.columns if c.startswith("attr_")]
+    names = [c.replace("attr_", "") for c in attr]
+    prof = fp.groupby("dataset")[attr].mean()
+    prof.columns = names
+    order = prof.abs().max().sort_values(ascending=False).index.tolist()
+
+    with plt.rc_context(RC):
+        fig, axes = plt.subplots(1, 3, figsize=(10.6, 3.5),
+                                 gridspec_kw=dict(width_ratios=[1.25, 1.15, 1]))
+
+        ax = axes[0]
+        y = np.arange(len(order))
+        w = 0.2
+        for k, ds in enumerate([d for d in DATASET_LABELS
+                                if d in prof.index]):
+            ax.barh(y + (k - 1.5) * w, prof.loc[ds, order], height=w * 0.92,
+                    color=DATASET_COLORS.get(ds, "gray"), zorder=3,
+                    label=DATASET_LABELS.get(ds, ds))
+        ax.axvline(0, color=INK, lw=0.9, zorder=4)
+        ax.set_yticks(y, order, fontsize=5.8)
+        ax.invert_yaxis()
+        ax.set_xlabel("normalised attribution")
+        ax.legend(fontsize=5.4, loc="lower right")
+        ax.set_title("what each arm's networks rely on", fontsize=6.4,
+                     color=MUTED, pad=4)
+        _panel_tag(ax, "a")
+
+        ax = axes[1]
+        d = dec.set_index("feature_group").reindex(order).reset_index()
+        y = np.arange(len(d))
+        ax.barh(y - 0.2, d["omega2_dataset"], height=0.36, color="#0072B2",
+                zorder=3, label="provenance")
+        ax.barh(y + 0.2, d["omega2_arch"], height=0.36, color="#D55E00",
+                zorder=3, label="architecture")
+        ax.scatter(d["dataset_artifact_floor"], y - 0.2, s=16, marker="|",
+                   c=INK, zorder=5, linewidths=1.4)
+        ax.scatter(d["arch_artifact_floor"], y + 0.2, s=16, marker="|",
+                   c=INK, zorder=5, linewidths=1.4)
+        ax.set_yticks(y, ["" for _ in y])
+        ax.invert_yaxis()
+        ax.set_xlabel(r"$\omega^2$")
+        ax.legend(fontsize=5.6, loc="lower right")
+        ax.set_title("ticks: each factor's own artifact floor", fontsize=6.4,
+                     color=MUTED, pad=4)
+        _panel_tag(ax, "b")
+
+        ax = axes[2]
+        g = "EV difference"
+        col = f"attr_{g}"
+        if col in fp.columns:
+            dss = [d2 for d2 in DATASET_LABELS if d2 in fp["dataset"].values]
+            for k, ds in enumerate(dss):
+                v = fp[fp["dataset"] == ds][col]
+                ax.scatter(np.full(len(v), k)
+                           + np.linspace(-0.16, 0.16, len(v)), v, s=16,
+                           c=DATASET_COLORS.get(ds, "gray"), alpha=0.85,
+                           linewidths=0.3, edgecolors="white", zorder=3)
+                ax.plot([k - 0.28, k + 0.28], [v.mean()] * 2, color=INK,
+                        lw=1.6, zorder=4)
+            ax.axhline(0, color=FAINT, lw=0.9, ls="--", zorder=1)
+            ax.set_xticks(range(len(dss)),
+                          [DATASET_SHORT.get(d2, d2) for d2 in dss],
+                          fontsize=5.8)
+            ax.set_ylabel("attribution to  EV difference")
+            row = dec[dec["feature_group"] == g]
+            if len(row):
+                r = row.iloc[0]
+                ax.set_title(
+                    f"provenance $\\omega^2$={r['omega2_dataset']:.2f} "
+                    f"vs floor {r['dataset_artifact_floor']:.2f}",
+                    fontsize=6.2, color=MUTED, pad=4)
+        _panel_tag(ax, "c")
+        fig.tight_layout(w_pad=2.0)
+        _save(fig, figdir, "fig_attribution.pdf")

@@ -1,0 +1,12 @@
+feature_group,omega2_dataset,omega2_arch,arch_artifact_floor,dataset_artifact_floor,arch_clears,dataset_clears
+A outcomes,0.166,0.622,0.176,0.354,True,False
+B outcomes,0.136,0.132,0.445,0.665,False,False
+A summary,0.448,0.592,0.432,0.547,True,False
+EV of B,0.358,0.374,0.589,0.270,False,True
+SD of B,0.326,0.247,0.865,0.402,False,False
+extremes of B,0.305,0.378,0.120,0.180,True,True
+P(loss) of B,0.357,0.623,0.934,0.200,False,True
+n outcomes B,0.000,0.104,0.381,0.442,False,False
+EV difference,0.881,0.516,0.532,0.019,False,True
+SD difference,0.104,0.131,0.419,0.193,False,False
+correlation,0.038,0.060,0.236,0.000,False,True

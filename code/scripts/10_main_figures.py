@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 
 from src.data import TRUE_THETA
+from src.figures_paper import fig_attribution
 from src.figures_main import (main1_what_is_learned, main2_artifact_floor,
                               main3_causal, main4_description_experience,
                               main5_transfer, main6_reliability,
@@ -63,6 +64,8 @@ SUPP_FIGS = [
     ("figS6_controlled_extra", "supp_controlled_extra",
      "Interaction check, index responsiveness, per-family ordering and screen "
      "sensitivity"),
+    ("figS7_attribution", "fig_attribution",
+     "Attribution readout: which parts of a gamble each network relies on"),
 ]
 
 
@@ -195,6 +198,12 @@ if __name__ == "__main__":
         probe_meta, ppreds, pair_ids[["run_id", "dataset", "arch"]], h3,
         grad[grad["identifiable"]], table("experience_trend.csv"), figdir)
     print("  fig4 description-experience")
+
+    afp, adec = (table("attribution_fingerprints.csv"),
+                 table("attribution_decomposition.csv"))
+    if afp is not None and adec is not None:
+        fig_attribution(afp, adec, figdir)
+        print("  figS7 attribution")
 
     tr = table("transfer.csv")
     if tr is not None:

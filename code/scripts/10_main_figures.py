@@ -21,7 +21,6 @@ import numpy as np
 import pandas as pd
 
 from src.data import TRUE_THETA
-from src.figures_paper import fig_attribution
 from src.figures_main import (main1_what_is_learned, main2_artifact_floor,
                               main3_causal, main4_description_experience,
                               main5_transfer, main6_reliability,
@@ -202,11 +201,9 @@ if __name__ == "__main__":
         grad[grad["identifiable"]], table("experience_trend.csv"), figdir)
     print("  fig4 description-experience")
 
-    afp, adec = (table("attribution_fingerprints.csv"),
-                 table("attribution_decomposition.csv"))
-    if afp is not None and adec is not None:
-        fig_attribution(afp, adec, figdir)
-        print("  figS7 attribution")
+    # Attribution figures are produced by shapcode/run_figures.py; this stage
+    # only files them. Keeping the generation out here means the main pipeline
+    # does not import the attribution module.
 
     tr = table("transfer.csv")
     if tr is not None:

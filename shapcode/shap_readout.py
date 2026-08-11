@@ -33,7 +33,9 @@ from math import factorial
 import numpy as np
 import torch
 
-from .problems import flat_features
+# Absolute import: this module lives outside code/src, so the caller puts
+# code/ on the path (shapcode/_boot.py does it).
+from src.problems import flat_features
 
 # Indices follow problems.flat_features: A_p[10] A_x[10] | B_p[10] B_x[10] |
 # summary_A[6] | summary_B[6] | diffs[2] | corr, where each summary is
@@ -72,7 +74,8 @@ def predict_flat(model, X, batch=8192):
     return np.concatenate(out).astype(float)
 
 
-def grouped_shapley(model, X, baseline, groups=None, per_sample=False):
+def grouped_shapley(model, X, baseline, groups=None, per_sample=False,
+                    dtype=np.float32):
     """Exact Shapley value of each feature group.
 
     The coalition values are kept per row rather than averaged, so the same
@@ -85,6 +88,10 @@ def grouped_shapley(model, X, baseline, groups=None, per_sample=False):
     per_sample=False -> {group: float}, summing to mean(f(X)) - f(baseline)
     per_sample=True  -> {group: array[n_rows]}, each row summing to
                         f(x) - f(baseline) for that row
+
+    dtype is float32 because that is what the torch models consume, which caps
+    efficiency error at ~1e-7; pass float64 to verify the algebra itself to
+    machine precision (test_shapley.py does).
     """
     groups = groups or FEATURE_GROUPS
     keys = list(groups)
@@ -94,7 +101,7 @@ def grouped_shapley(model, X, baseline, groups=None, per_sample=False):
     v = {}
     for r in range(G + 1):
         for S in combinations(range(G), r):
-            Z = np.tile(baseline, (len(X), 1)).astype(np.float32)
+            Z = np.tile(baseline, (len(X), 1)).astype(dtype)
             for gi in S:
                 cols = groups[keys[gi]]
                 Z[:, cols] = X[:, cols]

@@ -14,7 +14,7 @@ cross-check against the CPT readout.
 Self-contained: trains four representative models (one per arm), computes
 exact per-sample grouped Shapley, draws, and exits. About a minute.
 
-Usage: python code/scripts/12_attribution_figure.py [--arch MLP_L]
+Usage: python shapcode/run_figures.py [--arch MLP_L]
 """
 import _boot  # noqa
 import argparse
@@ -25,12 +25,12 @@ import numpy as np
 import pandas as pd
 
 from src.data import load_arm, split_indices, take
-from src.figures_paper import fig_attribution_rich
+from shap_figures import fig_attribution_rich
 from src.models import make_model
 from src.paths import FIGURES, TABLES
 from src.probes import build_probe_battery
 from src.problems import flat_features
-from src.shap_readout import FEATURE_GROUPS, grouped_shapley
+from shap_readout import FEATURE_GROUPS, grouped_shapley
 
 MAIN = ["c13k_exp", "c13k_desc", "cpc18_exp", "cpc18_desc"]
 

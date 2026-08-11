@@ -8,6 +8,8 @@ if [ "${QUICK:-0}" = "1" ]; then Q="--quick"; fi
 
 python code/scripts/00_prepare_data.py --c13k-dir "$C13K_DIR"
 python code/tests/test_cpt_consistency.py
+python code/tests/test_lottery_expansion.py
+python shapcode/test_shapley.py
 
 # Learning rates are calibrated per architecture and pinned in
 # src/models.ARCH_LR. Re-run this only after changing the architectures or the
@@ -33,6 +35,6 @@ python code/scripts/05_symbolic_distill.py
 python code/scripts/06_analyze.py
 python code/scripts/07_figures.py
 python code/scripts/08_paper_outputs.py
-python code/scripts/11_attribution.py
-python code/scripts/12_attribution_figure.py
+python shapcode/run_decomposition.py
+python shapcode/run_figures.py
 python code/scripts/10_main_figures.py

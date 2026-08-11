@@ -1,7 +1,7 @@
 """Attribution readout: which parts of a gamble each trained network uses.
 
 Fourth readout in the paper, and the only one that assumes no functional form
-(see src/shap_readout for why that matters). Produces, per trained model, an
+(see shap_readout.py for why that matters). Produces, per trained model, an
 exact Shapley value for each of eleven semantic feature groups, then runs the
 same two questions asked of every other readout:
 
@@ -16,7 +16,7 @@ and not weights, and attribution needs to perturb inputs. Training is
 deterministic given the seed, so these are the same models the rest of the
 pipeline analysed.
 
-Usage: python code/scripts/11_attribution.py [--seeds 5]
+Usage: python shapcode/run_decomposition.py [--seeds 5]
 """
 import _boot  # noqa
 import argparse
@@ -32,7 +32,7 @@ from src.data import load_arm, split_indices, take
 from src.models import make_model
 from src.paths import TABLES
 from src.probes import build_probe_battery
-from src.shap_readout import (FEATURE_GROUPS, FLAT_ARCHS,
+from shap_readout import (FEATURE_GROUPS, FLAT_ARCHS,
                               attribution_fingerprint,
                               conditional_attribution)
 

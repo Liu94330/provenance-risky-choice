@@ -5,10 +5,11 @@
 ## 仓库结构
 
 ```
-code/                 全部代码
+code/                 主流水线代码
   src/                包（paths.py 是所有路径的唯一真源）
   scripts/            00-10 流水线各阶段
   tests/              CPT 一致性、彩票展开正确性
+shapcode/             归因读出（第四种读出，独立模块，含 README 与公理测试）
 data/external/        可再分发的 CPC18 聚合量（含 ATTRIBUTION.md）
 data/processed/       生成的数据臂缓存（.npz，不入库）
 results/              runs / tables / figures（大件不入库）

@@ -1,6 +1,7 @@
 MIT License
 
-Copyright (c) 2026 <YOUR NAME OR INSTITUTION -- fill this in before publishing>
+Copyright (c) 2026 Jing Yang, Zheng Lin, Chunhong Yuan, Shengrui Liu,
+                   Ziyu Song, Jinfeng Xu and Por Lip Yee
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +24,8 @@ SOFTWARE.
 --------------------------------------------------------------------------------
 SCOPE
 
-This licence covers the code in `code/` and the figures and tables in
-`paper_results/`. It does NOT cover third-party data.
+This licence covers everything in this repository EXCEPT the third-party data
+under `data/external/`.
 
 `data/external/` redistributes aggregate CPC18 quantities under the terms set
 by their authors. choices13k (CC BY-NC-SA 4.0) and the full CPC18 raw release

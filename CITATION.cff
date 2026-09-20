@@ -1,0 +1,96 @@
+cff-version: 1.2.0
+message: "If you use this software or the results it produces, please cite the paper below."
+title: "Training-Data Provenance Governs the Cognitive Theories Encoded by Neural Models of Risky Choice — code and results"
+abstract: >-
+  Experimental framework that treats each trained neural network as a
+  participant: models trained across provenance arms of human risky-choice data
+  and across eight architectures are interrogated with a fixed battery of 1,742
+  diagnostic problems, and reduced to four independent read-outs of the theory
+  they encode. Includes the identifiability screens, design-sufficiency
+  thresholds and artefact floors that make the comparison valid.
+type: software
+license: MIT
+keywords:
+  - risky choice
+  - dataset provenance
+  - cumulative prospect theory
+  - machine behaviour
+  - model auditing
+authors:
+  - given-names: Jing
+    family-names: Yang
+    affiliation: "Center of Research for Cyber Security and Network (CSNET), Faculty of Computer Science and Information Technology, Universiti Malaya, Kuala Lumpur, Malaysia"
+  - given-names: Zheng
+    family-names: Lin
+    affiliation: "Interdisciplinary Centre for Security, Reliability and Trust (SnT), University of Luxembourg, Luxembourg"
+  - given-names: Chunhong
+    family-names: Yuan
+    affiliation: "Faculty of Control Systems and Robotics, ITMO University, St. Petersburg, Russia"
+  - given-names: Shengrui
+    family-names: Liu
+    affiliation: "Faculty of Control Systems and Robotics, ITMO University, St. Petersburg, Russia"
+  - given-names: Ziyu
+    family-names: Song
+    affiliation: "College of Communication Engineering, Jilin University, Changchun, China"
+  - given-names: Jinfeng
+    family-names: Xu
+    affiliation: "Department of Electrical and Electronic Engineering, University of Hong Kong, Hong Kong SAR, China"
+  - given-names: Lip Yee
+    family-names: Por
+    affiliation: "Center of Research for Cyber Security and Network (CSNET), Faculty of Computer Science and Information Technology, Universiti Malaya, Kuala Lumpur, Malaysia"
+preferred-citation:
+  type: article
+  title: "Training-Data Provenance Governs the Cognitive Theories Encoded by Neural Models of Risky Choice"
+  year: 2026
+  status: submitted
+  authors:
+    - given-names: Jing
+      family-names: Yang
+    - given-names: Zheng
+      family-names: Lin
+    - given-names: Chunhong
+      family-names: Yuan
+    - given-names: Shengrui
+      family-names: Liu
+    - given-names: Ziyu
+      family-names: Song
+    - given-names: Jinfeng
+      family-names: Xu
+    - given-names: Lip Yee
+      family-names: Por
+references:
+  - type: article
+    title: "Using large-scale experiments and machine learning to discover theories of human decision-making"
+    year: 2021
+    journal: Science
+    volume: "372"
+    start: 1209
+    end: 1214
+    authors:
+      - family-names: Peterson
+        given-names: Joshua C.
+      - family-names: Bourgin
+        given-names: David D.
+      - family-names: Agrawal
+        given-names: Mayank
+      - family-names: Reichman
+        given-names: Daniel
+      - family-names: Griffiths
+        given-names: Thomas L.
+    notes: "choices13k dataset (CC BY-NC-SA 4.0)"
+  - type: article
+    title: "From anomalies to forecasts: Toward a descriptive model of decisions under risk, under ambiguity, and from experience"
+    year: 2017
+    journal: Psychological Review
+    authors:
+      - family-names: Erev
+        given-names: Ido
+      - family-names: Ert
+        given-names: Eyal
+      - family-names: Plonsky
+        given-names: Ori
+      - family-names: Cohen
+        given-names: Doron
+      - family-names: Cohen
+        given-names: Oded
+    notes: "CPC18 / CPC15 data"

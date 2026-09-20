@@ -21,7 +21,7 @@ from .data import load_arm, split_indices, take, subsample, importance_weights
 from .models import make_model
 from .probes import build_probe_battery
 
-from .paths import RESULTS  # noqa: E402  (single source of truth)
+from .paths import PROCESSED, RESULTS  # noqa: E402  (single source of truth)
 
 
 def run_cell(dataset, arch, seed, eval_datasets, device="cpu",
@@ -65,6 +65,12 @@ def run_cell(dataset, arch, seed, eval_datasets, device="cpu",
 
     cross = {}
     for d in eval_datasets:
+        # Eval-only arms built from data we cannot redistribute (the CPC18
+        # competition problems need Zenodo 2571510) are simply absent for most
+        # readers. Skip them instead of failing the whole grid; every consumer
+        # of these columns selects the ones that exist.
+        if not os.path.exists(os.path.join(PROCESSED, f"{d}.npz")):
+            continue
         darrs = load_arm(d)
         _, _, dte = split_indices(len(darrs["y"]), seed=split_seed)
         dtest = take(darrs, dte)

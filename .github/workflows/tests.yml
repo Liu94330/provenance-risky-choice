@@ -1,0 +1,48 @@
+# Correctness checks that need no third-party data.
+#
+# The two tests below run against files committed in this repository:
+# the CPT numpy/torch agreement test is self-contained, and the lottery
+# expansion test checks the reverse-engineered expansion rules against the
+# 420 published CPC18 option distributions in data/external/.
+#
+# shapcode/test_shapley.py is deliberately NOT run here: its final check
+# trains a network on the cpc18_exp arm, which requires stage 00, which
+# requires a local copy of choices13k (CC BY-NC-SA, not redistributable).
+# Run it locally after `00_prepare_data.py`.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Byte-compile every module
+        run: python -m compileall -q code shapcode
+
+      - name: CPT numpy/torch agreement
+        run: python code/tests/test_cpt_consistency.py
+
+      - name: Lottery expansion against the published CPC18 distributions
+        run: python code/tests/test_lottery_expansion.py

@@ -1,6 +1,6 @@
 """The attribution figure, in the form attribution analysis is normally read.
 
-The decomposition in 11_attribution.py collapses each model to eleven numbers,
+The decomposition in run_decomposition.py collapses each model to eleven numbers,
 which is what the variance analysis needs and also throws away the thing
 attribution is good at: for `EV difference` the per-probe spread is over three
 times the mean, so a single number says "unused" about a group the model leans

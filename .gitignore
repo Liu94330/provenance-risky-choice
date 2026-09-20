@@ -22,13 +22,12 @@ results/runs/
 # paper_results/, which 10_main_figures.py assembles.
 results/figures/
 
-# Large intermediate tables (per-run records, not manuscript tables). The
-# numbered manuscript tables under paper_results/tables/ are committed.
-results/tables/theory_coords.csv
-results/tables/indices.csv
-results/tables/sr_expressions.csv
-results/tables/probe_level_omega2.csv
-results/runs_*.csv
+# Per-run record tables (theory_coords.csv, indices.csv, sr_expressions.csv,
+# probe_level_omega2.csv, runs_*.csv) ARE committed, ~3.5 MB in total: they are
+# one row per trained model, and shipping them means the whole analysis from
+# stage 06 onward can be re-run and checked without retraining 2,240 models.
+# They contain no third-party data rows -- only fitted coefficients, metrics and
+# the project's own synthetic probe grid.
 
 # Python
 __pycache__/

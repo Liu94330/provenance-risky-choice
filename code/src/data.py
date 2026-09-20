@@ -136,8 +136,9 @@ def build_cpc18_arms():
         "cpc18_rehovot_exp": one_arm(
             byloc[byloc["Location"] == "Rehovot"], [2, 3, 4, 5], "reho"),
     }
-    # Experience gradient, within problem: the same 210 problems and the same
-    # respondents at five stages of feedback. Block 1 is the first encounter
+    # Experience gradient, within problem: the same 182 non-ambiguous problems
+    # (Amb == 0, filtered above) and the same respondents at five stages of
+    # feedback. Block 1 is the first encounter
     # (identical to the description arm) and block 5 is fully experienced, so
     # this is the description-experience gap resolved into the trajectory that
     # produces it rather than treated as a two-level contrast.

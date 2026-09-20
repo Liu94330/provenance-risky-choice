@@ -13,8 +13,9 @@ it, and so the Shapley implementation ships with its own correctness test.
 shapcode/
   shap_readout.py      exact grouped Shapley over feature groups
   shap_figures.py      the two figures (styling imported from code/src/figures)
-  run_decomposition.py 160 models -> attributions, variance decomposition,
-                       artifact floor, cross-check against the CPT readout
+  run_decomposition.py 160 models (100 main-arm + 60 fixed-agent floor)
+                       -> attributions, variance decomposition, artifact
+                       floor, cross-check against the CPT readout
   run_figures.py       per-probe values -> beeswarm / dependence / conditional
   test_shapley.py      the Shapley axioms, verified to machine precision
   _boot.py             puts code/ and shapcode/ on the path
@@ -31,7 +32,7 @@ are partitioned into eleven semantic groups (`EV difference`, `P(loss) of B`,
 
 **Exact, not sampled.** With eleven groups all 2¹¹ coalitions can be
 enumerated, so the values are the Shapley values rather than an estimate of
-them — about 0.3 s per model. Nothing then rests on how well a sampler
+them — under a second per model. Nothing then rests on how well a sampler
 converged, which matters because the conclusion is a comparison *between*
 architectures and a sampling-noise term would sit right on top of it.
 
@@ -45,19 +46,21 @@ nothing else would catch an error in the coalition weighting.
 
 `grouped_shapley(..., per_sample=True)` returns the full `[n_probes]` vector
 per group at no extra cost, because the coalition values are already computed
-per row. This matters: for `EV difference` the per-probe spread is **3.4× the
-mean**, so averaging first reports "unused" for a group the model leans on in
+per row. This matters: for `EV difference` the per-probe values swing far wider
+than their own average — the mean over probes is near zero (+0.001 on
+`c13k_desc`) while the per-probe SD is 0.145, about **1.7× the mean absolute
+value** — so averaging first reports "unused" for a group the model leans on in
 one region of probability space and against in another.
 
 ## Usage
 
 ```bash
-python shapcode/test_shapley.py        # axioms, run this first
-python shapcode/run_decomposition.py   # ~15 min, 160 models
-python shapcode/run_figures.py         # ~1 min, 4 models
+python3 shapcode/test_shapley.py        # axioms, run this first
+python3 shapcode/run_decomposition.py   # ~15 min; 100 main + 60 floor models
+python3 shapcode/run_figures.py         # ~1 min, 4 models
 ```
 
-Both are in `run_all.sh`. Outputs land in `results/tables/` and
+All three are in `run_all.sh`. Outputs land in `results/tables/` and
 `results/figures/`; `code/scripts/10_main_figures.py` files the figures into
 `paper_results/figures/supp/` as S7 and S8.
 

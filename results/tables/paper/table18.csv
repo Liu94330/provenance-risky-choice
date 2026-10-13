@@ -1,10 +1,10 @@
 value,arch_observed,arch_artifact_floor,arch_excess,arch_survives,dataset_observed,dataset_artifact_floor,dataset_excess,dataset_survives
-alpha,0.803,0.751,0.052,True,0.367,0.062,0.305,True
-beta,0.487,0.782,-0.296,False,0.360,0.055,0.304,True
-lam,0.211,0.667,-0.456,False,0.314,0.048,0.266,True
-gamma_pos,0.453,0.596,-0.143,False,0.519,0.000,0.519,True
-gamma_neg,0.044,0.490,-0.446,False,0.287,0.078,0.209,True
-tau,0.764,0.980,-0.216,False,0.628,0.131,0.497,True
+alpha,0.803,0.753,0.050,True,0.367,0.047,0.319,True
+beta,0.487,0.667,-0.180,False,0.360,0.045,0.315,True
+lam,0.211,0.659,-0.448,False,0.314,0.033,0.281,True
+gamma_pos,0.453,0.575,-0.122,False,0.519,0.000,0.519,True
+gamma_neg,0.044,0.492,-0.448,False,0.287,0.083,0.205,True
+tau,0.764,0.980,-0.216,False,0.628,0.114,0.514,True
 rare_event_index,0.497,0.751,-0.254,False,0.694,0.230,0.464,True
 certainty_index,0.485,0.371,0.114,True,0.689,0.063,0.626,True
 reflection_index,0.560,0.731,-0.171,False,0.103,0.002,0.100,True

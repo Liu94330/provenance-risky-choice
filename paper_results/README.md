@@ -21,7 +21,8 @@ Figures as 600 dpi PNG with the vector PDF master alongside. Composed and filed 
 - **Figure S6** `figS6_controlled_extra.png` -- Interaction check, index responsiveness, per-family ordering and screen sensitivity
 - **Figure S7** `figS7_attribution.png` -- Attribution readout: which parts of a gamble each network relies on
 - **Figure S8** `figS8_attribution_probe_level.png` -- Per-probe Shapley values: beeswarm, dependence, conditional map and the cross-check against the CPT readout
+- **Figure S9** `figS9_robustness.png` -- Robustness of the floor-clearing result: five floor definitions, family-wise correction, leave-one-architecture-out, and the distilled expressions compared as functions
 
 ## Tables
 
-`TABLES.md` carries all 20 tables with captions and sample sizes; `tableNN.csv` are the same numbers machine-readable. Per-run records (`theory_coords.csv`, `indices.csv`, ...) stay in `results/tables/` -- they are inputs, not manuscript tables.
+`TABLES.md` carries all 24 tables with captions and sample sizes; `tableNN.csv` are the same numbers machine-readable. Per-run records (`theory_coords.csv`, `indices.csv`, ...) stay in `results/tables/` -- they are inputs, not manuscript tables.

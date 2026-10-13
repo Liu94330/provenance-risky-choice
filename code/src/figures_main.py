@@ -763,3 +763,160 @@ def main6_reliability(coords, err, figdir, thr=0.02):
         _tag(ax, "c")
         fig.tight_layout(w_pad=2.1)
         _save(fig, figdir, "main6_reliability.pdf")
+
+
+# ---------------------------------------------------------------------------
+# Supplementary: robustness of the floor-clearing result (11_robustness.py)
+# ---------------------------------------------------------------------------
+
+FLOOR_DEF_SHORT = {
+    "problem pool": "pool",
+    "arm size": "size",
+    "respondents": "respondents",
+    "largest component": "max of 3",
+    "composite (pool x size x respondents)": "composite",
+    "sufficiency suite": "sufficiency",
+    "controlled suite": "controlled",
+}
+
+
+def supp_robustness(fd, fs, js, sym, pca, figdir, pca_meta=None):
+    """Four panels a referee would ask for, from results/tables/robustness_*
+    and symbolic_*:
+      a  provenance: observed interval against every floor definition
+      b  how many read-outs clear, per floor definition and test (both factors)
+      c  leave-one-architecture-out
+      d  the distilled expressions as functions: PCA + PERMANOVA
+    """
+    with plt.rc_context(RC):
+        fig, axes = plt.subplots(1, 4, figsize=(13.6, 3.7),
+                                 gridspec_kw=dict(width_ratios=[1.25, 1, 1, 1]))
+
+        # --- a: provenance observed vs each floor definition --------------
+        ax = axes[0]
+        prov = fd[fd["factor"] == "provenance"]
+        defs = [d for d in FLOOR_DEF_SHORT if d in prov["floor_def"].unique()
+                and d not in ("sufficiency suite", "controlled suite")]
+        order = (prov[prov["floor_def"] == defs[0]]
+                 .sort_values(["family", "value"], ascending=[False, True]))
+        vals = order["value"].tolist()
+        greys = ["#d9d9d9", "#bdbdbd", "#a0a0a0", "#7a7a7a", "#4d4d4d"]
+        for yi, v in enumerate(vals):
+            r0 = order[order["value"] == v].iloc[0]
+            for k, dname in enumerate(defs):
+                r = prov[(prov["floor_def"] == dname)
+                         & (prov["value"] == v)].iloc[0]
+                off = (k - (len(defs) - 1) / 2) * 0.13
+                ax.plot([r["floor_lo"], r["floor_hi"]], [yi + off, yi + off],
+                        color=greys[k % len(greys)], lw=1.6, zorder=2,
+                        solid_capstyle="butt",
+                        label=FLOOR_DEF_SHORT[dname] if yi == 0 else None)
+            ax.plot([r0["obs_lo"], r0["obs_hi"]], [yi, yi], color=DS_C,
+                    lw=2.2, zorder=4, solid_capstyle="butt",
+                    label="observed (provenance)" if yi == 0 else None)
+            ax.plot([r0["obs"]], [yi], marker="D", ms=4, color=DS_C,
+                    markeredgecolor="white", markeredgewidth=0.5, zorder=5)
+        ax.set_yticks(range(len(vals)),
+                      [_pname(v).split(" (")[0].replace("_", " ")
+                       for v in vals], fontsize=5.4)
+        ax.invert_yaxis()
+        ax.set_xlim(0, 1.02)
+        ax.set_xlabel(r"$\omega^2$")
+        ax.set_title("provenance against five floor definitions",
+                     fontsize=6.4, color=MUTED, pad=4)
+        ax.legend(fontsize=5.2, loc="upper center", ncol=3, frameon=False,
+                  bbox_to_anchor=(0.5, -0.16), handlelength=1.6,
+                  columnspacing=1.0)
+        _tag(ax, "a")
+
+        # --- b: counts per definition and test ----------------------------
+        ax = axes[1]
+        tests = [("clears_interval", "interval rule"),
+                 ("clears_holm", "Holm-adjusted p < .05")]
+        rows = []
+        for fac in ["provenance", "architecture"]:
+            for _, r in fs[fs["factor"] == fac].iterrows():
+                rows.append((fac, FLOOR_DEF_SHORT.get(r["floor_def"],
+                                                      r["floor_def"]),
+                             r[tests[0][0]], r[tests[1][0]], r["n_readouts"]))
+        y = np.arange(len(rows))
+        for yi, (fac, dname, c_int, c_holm, n) in enumerate(rows):
+            col = DS_C if fac == "provenance" else AR_C
+            ax.barh(yi - 0.18, c_int, height=0.34, color=col, alpha=0.9,
+                    zorder=3)
+            ax.barh(yi + 0.18, c_holm, height=0.34, color=col, alpha=0.45,
+                    zorder=3)
+        ax.set_yticks(y, [f"{'prov.' if f == 'provenance' else 'arch.'}: {d}"
+                          for f, d, *_ in rows], fontsize=5.6)
+        for lab, (f, *_) in zip(ax.get_yticklabels(), rows):
+            lab.set_color(DS_C if f == "provenance" else AR_C)
+        n_tot = int(fs["n_readouts"].max())
+        ax.axvline(n_tot, color=INK, lw=0.8, ls=":", zorder=4)
+        ax.set_xlim(0, n_tot + 0.6)
+        ax.set_xlabel(f"read-outs clearing their floor (of {n_tot})")
+        ax.invert_yaxis()
+        # family separators / labels
+        n_prov = sum(1 for r in rows if r[0] == "provenance")
+        ax.axhline(n_prov - 0.5, color=FAINT, lw=0.7, ls=":")
+        from matplotlib.patches import Patch
+        ax.legend(handles=[Patch(color=INK, alpha=0.9, label=tests[0][1]),
+                           Patch(color=INK, alpha=0.4, label=tests[1][1])],
+                  fontsize=5.4, loc="lower right", frameon=False)
+        ax.set_title("floor definition x test", fontsize=6.4, color=MUTED,
+                     pad=4)
+        _tag(ax, "b")
+
+        # --- c: leave-one-architecture-out --------------------------------
+        ax = axes[2]
+        j = js.copy()
+        labels = ["all" if l == "none" else l for l in j["left_out"]]
+        x = np.arange(len(j))
+        ax.plot(x, j["provenance_clears"], marker="o", ms=4.5, color=DS_C,
+                lw=1.2, zorder=4, label="provenance, pool floor")
+        ax.plot(x, j["provenance_clears_composite"], marker="o", ms=4.5,
+                color=DS_C, lw=1.2, ls="--", mfc="white", zorder=4,
+                label="provenance, composite floor")
+        ax.plot(x, j["architecture_clears"], marker="s", ms=4.5, color=AR_C,
+                lw=1.2, zorder=4, label="architecture")
+        ax.axhline(j["n_readouts"].max(), color=INK, lw=0.8, ls=":")
+        ax.set_xticks(x, labels, rotation=55, ha="right", fontsize=5.4)
+        ax.set_ylim(-0.4, j["n_readouts"].max() + 0.8)
+        ax.set_ylabel("read-outs clearing their floor")
+        ax.set_xlabel("architecture left out")
+        ax.legend(fontsize=5.3, loc="center right", frameon=False)
+        ax.set_title("no single architecture carries the result",
+                     fontsize=6.4, color=MUTED, pad=4)
+        _tag(ax, "c")
+
+        # --- d: symbolic expressions as functions -------------------------
+        ax = axes[3]
+        for ds, sub in pca.groupby("dataset"):
+            for ar, s2 in sub.groupby("arch"):
+                ax.scatter(s2["pc1"], s2["pc2"], s=22,
+                           c=DATASET_COLORS.get(ds, MUTED),
+                           marker=ARCH_MARKERS.get(ar, "o"), alpha=0.85,
+                           linewidths=0.4, edgecolors="white", zorder=3)
+        for ds in pca["dataset"].unique():
+            sub = pca[pca["dataset"] == ds]
+            if len(sub) > 2:
+                _ellipse(ax, sub["pc1"].to_numpy(), sub["pc2"].to_numpy(),
+                         DATASET_COLORS.get(ds, MUTED))
+        ev = (pca_meta or {}).get("explained", [np.nan, np.nan])
+        ax.set_xlabel(f"PC1 ({100 * ev[0]:.0f}%)")
+        ax.set_ylabel(f"PC2 ({100 * ev[1]:.0f}%)")
+        fsym = sym[sym["view"].str.startswith("functional")].iloc[0]
+        ax.set_title(
+            "distilled CE(x, p) as functions:  PERMANOVA "
+            f"$F$ provenance {fsym['permanova_F_dataset']:.1f}, "
+            f"architecture {fsym['permanova_F_arch']:.1f}",
+            fontsize=6.0, color=MUTED, pad=4)
+        from matplotlib.lines import Line2D
+        h = [Line2D([], [], color=DATASET_COLORS[d], marker="o", ls="",
+                    ms=4, label=DATASET_SHORT.get(d, d))
+             for d in ["c13k_exp", "c13k_desc", "cpc18_exp", "cpc18_desc"]
+             if d in pca["dataset"].unique()]
+        ax.legend(handles=h, fontsize=5.2, loc="best", frameon=False)
+        _tag(ax, "d")
+
+        fig.tight_layout(w_pad=1.6)
+        _save(fig, figdir, "supp_robustness.pdf")

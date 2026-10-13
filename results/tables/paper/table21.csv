@@ -1,0 +1,8 @@
+factor,floor_def,n_readouts,clears_point,clears_interval,clears_holm,median_floor,median_obs
+architecture,sufficiency suite,11,2,0,0,0.724,0.487
+architecture,controlled suite,11,1,0,0,0.768,0.487
+provenance,problem pool,11,11,10,11,0.047,0.360
+provenance,arm size,11,7,5,5,0.185,0.360
+provenance,respondents,11,10,9,10,0.002,0.360
+provenance,largest component,11,7,4,4,0.230,0.360
+provenance,composite (pool x size x respondents),11,5,3,3,0.430,0.360

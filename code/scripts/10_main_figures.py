@@ -25,7 +25,7 @@ from src.data import TRUE_THETA
 from src.figures_main import (main1_what_is_learned, main2_artifact_floor,
                               main3_causal, main4_description_experience,
                               main5_transfer, main6_reliability,
-                              supp_controlled_extra)
+                              supp_controlled_extra, supp_robustness)
 from src.probes import build_probe_battery
 from src.train import RESULTS
 
@@ -69,6 +69,10 @@ SUPP_FIGS = [
     ("figS8_attribution_probe_level", "fig_attribution_rich",
      "Per-probe Shapley values: beeswarm, dependence, conditional map and the "
      "cross-check against the CPT readout"),
+    ("figS9_robustness", "supp_robustness",
+     "Robustness of the floor-clearing result: five floor definitions, "
+     "family-wise correction, leave-one-architecture-out, and the distilled "
+     "expressions compared as functions"),
 ]
 
 
@@ -212,6 +216,18 @@ if __name__ == "__main__":
     if tr is not None:
         main5_transfer(tr, figdir, order=MAIN, eval_only=EVAL_EXTRA)
         print("  fig5 transfer")
+
+    # Robustness of the headline (11_robustness.py); filed as S9.
+    fd_, fs_, js_ = (table("robustness_floor_definitions.csv"),
+                     table("robustness_floor_summary.csv"),
+                     table("robustness_jackknife_summary.csv"))
+    sym_, pca_ = (table("symbolic_clustering.csv"),
+                  table("symbolic_fingerprint_pca.csv"))
+    if all(x is not None for x in (fd_, fs_, js_, sym_, pca_)):
+        pmeta = os.path.join(tabdir, "symbolic_fingerprint_pca.json")
+        pmeta = json.load(open(pmeta)) if os.path.exists(pmeta) else None
+        supp_robustness(fd_, fs_, js_, sym_, pca_, figdir, pca_meta=pmeta)
+        print("  figS9 robustness")
 
     if err is not None:
         main6_reliability(main_all, err, figdir)

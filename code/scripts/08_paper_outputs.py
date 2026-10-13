@@ -336,14 +336,18 @@ if __name__ == "__main__":
 
     T.add(pd.read_csv(os.path.join(tabdir, "h1_threshold_sensitivity.csv")),
           "Sensitivity of H1 to the identifiability threshold.",
-          "Behavioural indices only, so the comparison keeps all six "
-          "architectures at every threshold.", index=False)
+          "Behavioural indices only, so the comparison keeps every "
+          "architecture the threshold itself does not remove.", index=False)
 
     syn = base[base["dataset"].isin(["syn_c13k", "syn_cpc"])
                & base["theory_identifiable"]]
     rec = syn.groupby("dataset")[PARAM_NAMES].agg(["mean", "std"])
-    truth = pd.Series({(p, "truth"): TRUE_THETA[p] for p in PARAM_NAMES})
-    rec.loc["generating agent"] = truth.reindex(rec.columns)
+    # the generating values go in the `mean` column of each parameter (the
+    # `std` of a known constant is 0); indexing them under a `truth` column
+    # that the frame does not have produced an empty row
+    rec.loc["generating agent"] = pd.Series(
+        {(p, "mean"): TRUE_THETA[p] for p in PARAM_NAMES}
+        | {(p, "std"): 0.0 for p in PARAM_NAMES}).reindex(rec.columns)
     T.add(rec, "H2. Recovery of a known agent from two problem distributions.",
           "One simulated CPT agent, identical parameters, simulated on the "
           "c13k and CPC18 problem sets; every network then read back through "
@@ -494,6 +498,66 @@ if __name__ == "__main__":
               "encoding; SET, TRANSFORMER and CPT_NET read per-outcome slots, "
               "for which these groups do not exist. Note the artifact floors "
               "are far higher here than for the other readouts.")
+
+    # ---- robustness of the floor-clearing result (11_robustness.py) ----
+    rfs = os.path.join(tabdir, "robustness_floor_summary.csv")
+    if os.path.exists(rfs):
+        T.add(pd.read_csv(rfs).set_index(["factor", "floor_def"]),
+              "Robustness to the floor definition and to family-wise "
+              "correction.",
+              "The main analysis uses the problem-pool share of the "
+              "controlled factorial as the provenance floor. The same "
+              "factorial also yields the arm-size and respondent shares; "
+              "'largest component' takes the maximum of the three in every "
+              "bootstrap replicate and 'composite' enters all three as one "
+              "8-level factor, so their interactions also count against "
+              "provenance. Architecture is given its usual floor "
+              "(sufficiency suite) and a second one from the controlled "
+              "suite. `clears_point`: observed > floor; `clears_interval`: "
+              "the paper's rule, observed 95% interval strictly above the "
+              "floor interval; `clears_holm`: Holm-adjusted bootstrap p < "
+              "0.05 across the eleven read-outs for H0 observed <= floor.")
+    rfd = os.path.join(tabdir, "robustness_floor_definitions.csv")
+    if os.path.exists(rfd):
+        t = pd.read_csv(rfd)
+        t = t[t["floor_def"].isin(["problem pool",
+                                   "composite (pool x size x respondents)",
+                                   "sufficiency suite"])]
+        T.add(t.set_index(["factor", "floor_def", "value"]),
+              "Per read-out floor comparison under the main and the "
+              "composite provenance floor, with Holm-adjusted p.",
+              "Subset of the full definitions table "
+              "(results/tables/robustness_floor_definitions.csv) showing the "
+              "floor used in the paper, the harshest alternative for "
+              "provenance, and the architecture floor. `p_raw` is the "
+              "fraction of bootstrap pairs in which the observed effect does "
+              "not exceed the floor; `p_holm` adjusts it across the eleven "
+              "read-outs of the same factor and floor.")
+    rjs = os.path.join(tabdir, "robustness_jackknife_summary.csv")
+    if os.path.exists(rjs):
+        T.add(pd.read_csv(rjs).set_index("left_out"),
+              "Leave-one-architecture-out: floor clearing with each "
+              "architecture removed in turn.",
+              "`none` is the full design. Interval rule with 200 within-cell "
+              "resamples; provenance floor = problem pool and, separately, "
+              "the composite floor; architecture floor = sufficiency suite. "
+              "GBT is deterministic (ten identical seeds, no within-cell "
+              "variance), LINEAR and SET are the architectures the screens "
+              "remove on the small arms, so these are the rows to read "
+              "first.")
+    scs = os.path.join(tabdir, "symbolic_clustering.csv")
+    if os.path.exists(scs):
+        T.add(pd.read_csv(scs).set_index("view"),
+              "H5. Do the distilled expressions sort by provenance or by "
+              "architecture?",
+              "Each run's gain and loss expressions are evaluated on the "
+              "(x/100, p) grid the regression was fitted on, so the "
+              "comparison is between the functions recovered, not their "
+              "strings; PERMANOVA permutes within strata of the other factor "
+              "(2,000 permutations), silhouettes and distance-based R^2 are "
+              "computed on standardised columns. The syntactic view uses "
+              "operator counts and program length, which is what Fig. S2c "
+              "displays. Four main arms, three seeds, eight architectures.")
 
     T.write(os.path.join(paperdir, "TABLES.md"),
             "Paper tables -- provenance vs architecture")

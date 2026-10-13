@@ -138,7 +138,7 @@ _behaviour screen: probe SD >= 0.02. theory screen: that, plus no CPT parameter 
 
 ## Table 5. Sensitivity of H1 to the identifiability threshold.
 
-_Behavioural indices only, so the comparison keeps all six architectures at every threshold._
+_Behavioural indices only, so the comparison keeps every architecture the threshold itself does not remove._
 
 |   probe_sd_threshold |   n_runs |   median_omega2_dataset |   median_omega2_arch |   n_readouts_dataset_wins | dropped_archs   |
 |---------------------:|---------:|------------------------:|---------------------:|--------------------------:|:----------------|
@@ -156,7 +156,7 @@ _One simulated CPT agent, identical parameters, simulated on the c13k and CPC18 
 |:-----------------|--------------------:|-------------------:|-------------------:|------------------:|------------------:|-----------------:|------------------------:|-----------------------:|------------------------:|-----------------------:|------------------:|-----------------:|
 | syn_c13k         |              0.8029 |             0.0624 |             1.1101 |            0.285  |            2.9986 |           1.3111 |                  0.6031 |                 0.0833 |                  0.7067 |                 0.1422 |            4.4863 |           1.6921 |
 | syn_cpc          |              0.7856 |             0.1119 |             1.1692 |            0.2742 |            2.4369 |           1.2183 |                  0.5972 |                 0.1299 |                  0.7654 |                 0.316  |            3.507  |           1.6841 |
-| generating agent |            nan      |           nan      |           nan      |          nan      |          nan      |         nan      |                nan      |               nan      |                nan      |               nan      |          nan      |         nan      |
+| generating agent |              0.88   |             0      |             0.88   |            0      |            2.25   |           0      |                  0.65   |                 0      |                  0.65   |                 0      |            6      |           0      |
 
 ## Table 7. H3. Rare-event index on the 1,266 matched problems.
 
@@ -333,12 +333,12 @@ _On the fixed-agent arms every run shares the same true coordinates, so any omeg
 
 | value               |   arch_observed |   arch_artifact_floor |   arch_excess | arch_survives   |   dataset_observed |   dataset_artifact_floor |   dataset_excess | dataset_survives   |
 |:--------------------|----------------:|----------------------:|--------------:|:----------------|-------------------:|-------------------------:|-----------------:|:-------------------|
-| alpha               |          0.8028 |                0.7506 |        0.0522 | True            |             0.3667 |                   0.0617 |           0.3051 | True               |
-| beta                |          0.4869 |                0.7825 |       -0.2956 | False           |             0.3596 |                   0.0552 |           0.3043 | True               |
-| lam                 |          0.2113 |                0.6673 |       -0.456  | False           |             0.3139 |                   0.0477 |           0.2662 | True               |
-| gamma_pos           |          0.453  |                0.5965 |       -0.1434 | False           |             0.5194 |                   0      |           0.5194 | True               |
-| gamma_neg           |          0.0438 |                0.4902 |       -0.4464 | False           |             0.2874 |                   0.0785 |           0.209  | True               |
-| tau                 |          0.7643 |                0.9804 |       -0.2161 | False           |             0.628  |                   0.1313 |           0.4967 | True               |
+| alpha               |          0.8028 |                0.7533 |        0.0496 | True            |             0.3667 |                   0.0473 |           0.3195 | True               |
+| beta                |          0.4869 |                0.6666 |       -0.1797 | False           |             0.3596 |                   0.045  |           0.3146 | True               |
+| lam                 |          0.2113 |                0.659  |       -0.4477 | False           |             0.3139 |                   0.0333 |           0.2806 | True               |
+| gamma_pos           |          0.453  |                0.5748 |       -0.1218 | False           |             0.5194 |                   0      |           0.5194 | True               |
+| gamma_neg           |          0.0438 |                0.4921 |       -0.4483 | False           |             0.2874 |                   0.0829 |           0.2045 | True               |
+| tau                 |          0.7643 |                0.9805 |       -0.2162 | False           |             0.628  |                   0.1143 |           0.5137 | True               |
 | rare_event_index    |          0.4965 |                0.7507 |       -0.2541 | False           |             0.6941 |                   0.2301 |           0.464  | True               |
 | certainty_index     |          0.4854 |                0.371  |        0.1144 | True            |             0.6888 |                   0.0632 |           0.6255 | True               |
 | reflection_index    |          0.5596 |                0.731  |       -0.1714 | False           |             0.1026 |                   0.0022 |           0.1004 | True               |
@@ -351,17 +351,17 @@ _400 resamples within design cells, so every replicate keeps a balanced design. 
 
 | value               | family            |   arch_lo |   arch_hi |   arch_floor_lo |   arch_floor_hi | arch_clears   |   ds_lo |   ds_hi |   ds_floor_lo |   ds_floor_hi | ds_clears   |
 |:--------------------|:------------------|----------:|----------:|----------------:|----------------:|:--------------|--------:|--------:|--------------:|--------------:|:------------|
-| alpha               | CPT coordinate    |    0.7834 |    0.8603 |          0.7653 |          0.8943 | False         |  0.2882 |  0.5101 |        0.0264 |        0.1228 | True        |
-| beta                | CPT coordinate    |    0.385  |    0.654  |          0.6959 |          0.8103 | False         |  0.2861 |  0.5413 |        0.0256 |        0.1006 | True        |
-| lam                 | CPT coordinate    |    0.1523 |    0.3773 |          0.677  |          0.8378 | False         |  0.2585 |  0.4624 |        0.011  |        0.0846 | True        |
-| gamma_pos           | CPT coordinate    |    0.3851 |    0.6482 |          0.5745 |          0.8432 | False         |  0.4567 |  0.6774 |        0      |        0.0094 | True        |
-| gamma_neg           | CPT coordinate    |    0      |    0.2694 |          0.4668 |          0.898  | False         |  0.2368 |  0.4512 |        0.0501 |        0.2173 | True        |
-| tau                 | CPT coordinate    |    0.7061 |    0.8631 |          0.9837 |          0.9913 | False         |  0.519  |  0.7834 |        0.0878 |        0.2563 | True        |
-| rare_event_index    | behavioural index |    0.4505 |    0.6131 |          0.7778 |          0.8734 | False         |  0.6813 |  0.769  |        0.1968 |        0.3611 | True        |
-| certainty_index     | behavioural index |    0.3786 |    0.6188 |          0.3487 |          0.5069 | False         |  0.6411 |  0.7967 |        0.0405 |        0.1293 | True        |
-| reflection_index    | behavioural index |    0.4248 |    0.6145 |          0.7558 |          0.836  | False         |  0.0096 |  0.1666 |        0      |        0.0089 | True        |
-| loss_aversion_kappa | behavioural index |    0.2413 |    0.4885 |          0.6604 |          0.8179 | False         |  0.2715 |  0.5029 |        0      |        0.0138 | True        |
-| ev_consistency      | behavioural index |    0.6722 |    0.7954 |          0.8039 |          0.8907 | False         |  0.0889 |  0.2406 |        0.0985 |        0.2246 | False       |
+| alpha               | CPT coordinate    |    0.7832 |    0.8599 |          0.7696 |          0.8952 | False         |  0.3014 |  0.5013 |        0.027  |        0.1141 | True        |
+| beta                | CPT coordinate    |    0.4038 |    0.6498 |          0.6943 |          0.8117 | False         |  0.2797 |  0.5316 |        0.0247 |        0.105  | True        |
+| lam                 | CPT coordinate    |    0.1552 |    0.3627 |          0.6751 |          0.8234 | False         |  0.2597 |  0.4505 |        0.0118 |        0.0894 | True        |
+| gamma_pos           | CPT coordinate    |    0.3791 |    0.6362 |          0.5705 |          0.8371 | False         |  0.4629 |  0.6592 |        0      |        0.0086 | True        |
+| gamma_neg           | CPT coordinate    |    0      |    0.2969 |          0.4622 |          0.9054 | False         |  0.2412 |  0.4803 |        0.048  |        0.2127 | True        |
+| tau                 | CPT coordinate    |    0.7015 |    0.8677 |          0.9838 |          0.9907 | False         |  0.5047 |  0.7908 |        0.087  |        0.2407 | True        |
+| rare_event_index    | behavioural index |    0.4498 |    0.6102 |          0.7774 |          0.8698 | False         |  0.6746 |  0.7639 |        0.2012 |        0.3552 | True        |
+| certainty_index     | behavioural index |    0.4125 |    0.6244 |          0.4161 |          0.5608 | False         |  0.6378 |  0.7871 |        0.0408 |        0.1273 | True        |
+| reflection_index    | behavioural index |    0.5063 |    0.6771 |          0.7666 |          0.8458 | False         |  0.0477 |  0.2278 |        0      |        0.0224 | True        |
+| loss_aversion_kappa | behavioural index |    0.1834 |    0.4075 |          0.7475 |          0.8712 | False         |  0.1586 |  0.3872 |        0      |        0.0087 | True        |
+| ev_consistency      | behavioural index |    0.6701 |    0.7837 |          0.8239 |          0.9038 | False         |  0.1864 |  0.3583 |        0.088  |        0.2039 | False       |
 
 ## Table 20. Attribution readout: variance decomposition of exact grouped Shapley values.
 
@@ -380,3 +380,82 @@ _A fourth readout that assumes no functional form -- it asks only how much the p
 | EV difference   |           0.8813 |        0.5159 |                0.532  |                   0.0193 | False         | True             |
 | SD difference   |           0.1036 |        0.1314 |                0.4194 |                   0.1933 | False         | False            |
 | correlation     |           0.038  |        0.0596 |                0.2361 |                   0      | False         | True             |
+
+## Table 21. Robustness to the floor definition and to family-wise correction.
+
+_The main analysis uses the problem-pool share of the controlled factorial as the provenance floor. The same factorial also yields the arm-size and respondent shares; 'largest component' takes the maximum of the three in every bootstrap replicate and 'composite' enters all three as one 8-level factor, so their interactions also count against provenance. Architecture is given its usual floor (sufficiency suite) and a second one from the controlled suite. `clears_point`: observed > floor; `clears_interval`: the paper's rule, observed 95% interval strictly above the floor interval; `clears_holm`: Holm-adjusted bootstrap p < 0.05 across the eleven read-outs for H0 observed <= floor._
+
+|                                                         |   n_readouts |   clears_point |   clears_interval |   clears_holm |   median_floor |   median_obs |
+|:--------------------------------------------------------|-------------:|---------------:|------------------:|--------------:|---------------:|-------------:|
+| ('architecture', 'sufficiency suite')                   |           11 |              2 |                 0 |             0 |         0.7239 |       0.4869 |
+| ('architecture', 'controlled suite')                    |           11 |              1 |                 0 |             0 |         0.7679 |       0.4869 |
+| ('provenance', 'problem pool')                          |           11 |             11 |                10 |            11 |         0.0473 |       0.3596 |
+| ('provenance', 'arm size')                              |           11 |              7 |                 5 |             5 |         0.1854 |       0.3596 |
+| ('provenance', 'respondents')                           |           11 |             10 |                 9 |            10 |         0.0021 |       0.3596 |
+| ('provenance', 'largest component')                     |           11 |              7 |                 4 |             4 |         0.2301 |       0.3596 |
+| ('provenance', 'composite (pool x size x respondents)') |           11 |              5 |                 3 |             3 |         0.43   |       0.3596 |
+
+## Table 22. Per read-out floor comparison under the main and the composite provenance floor, with Holm-adjusted p.
+
+_Subset of the full definitions table (results/tables/robustness_floor_definitions.csv) showing the floor used in the paper, the harshest alternative for provenance, and the architecture floor. `p_raw` is the fraction of bootstrap pairs in which the observed effect does not exceed the floor; `p_holm` adjusts it across the eleven read-outs of the same factor and floor._
+
+|                                                                                | family            |   n | dropped_archs   |    obs |   obs_lo |   obs_hi |   floor |   floor_lo |   floor_hi | clears_point   | clears_interval   |   p_raw |   p_holm | clears_holm   |
+|:-------------------------------------------------------------------------------|:------------------|----:|:----------------|-------:|---------:|---------:|--------:|-----------:|-----------:|:---------------|:------------------|--------:|---------:|:--------------|
+| ('architecture', 'sufficiency suite', 'alpha')                                 | CPT coordinate    | 255 | LINEAR          | 0.8028 |   0.7832 |   0.8599 |  0.7533 |     0.7696 |     0.8952 | True           | False             |  0.5084 |   1      | False         |
+| ('provenance', 'problem pool', 'alpha')                                        | CPT coordinate    | 255 | LINEAR          | 0.3667 |   0.3014 |   0.5013 |  0.0473 |     0.027  |     0.1141 | True           | True              |  0      |   0.0001 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'alpha')               | CPT coordinate    | 255 | LINEAR          | 0.3667 |   0.3014 |   0.5013 |  0.58   |     0.5804 |     0.7073 | False          | False             |  0.9999 |   1      | False         |
+| ('architecture', 'sufficiency suite', 'beta')                                  | CPT coordinate    | 255 | LINEAR          | 0.4869 |   0.4038 |   0.6498 |  0.6666 |     0.6943 |     0.8117 | False          | False             |  1      |   1      | False         |
+| ('provenance', 'problem pool', 'beta')                                         | CPT coordinate    | 255 | LINEAR          | 0.3596 |   0.2797 |   0.5316 |  0.045  |     0.0247 |     0.105  | True           | True              |  0      |   0.0001 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'beta')                | CPT coordinate    | 255 | LINEAR          | 0.3596 |   0.2797 |   0.5316 |  0.1272 |     0.1082 |     0.251  | True           | True              |  0.0016 |   0.014  | True          |
+| ('architecture', 'sufficiency suite', 'lam')                                   | CPT coordinate    | 255 | LINEAR          | 0.2113 |   0.1552 |   0.3627 |  0.659  |     0.6751 |     0.8234 | False          | False             |  1      |   1      | False         |
+| ('provenance', 'problem pool', 'lam')                                          | CPT coordinate    | 255 | LINEAR          | 0.3139 |   0.2597 |   0.4505 |  0.0333 |     0.0118 |     0.0894 | True           | True              |  0      |   0.0001 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'lam')                 | CPT coordinate    | 255 | LINEAR          | 0.3139 |   0.2597 |   0.4505 |  0.1423 |     0.1186 |     0.2738 | True           | False             |  0.0064 |   0.0513 | False         |
+| ('architecture', 'sufficiency suite', 'gamma_pos')                             | CPT coordinate    | 255 | LINEAR          | 0.453  |   0.3791 |   0.6362 |  0.5748 |     0.5705 |     0.8371 | False          | False             |  0.9665 |   1      | False         |
+| ('provenance', 'problem pool', 'gamma_pos')                                    | CPT coordinate    | 255 | LINEAR          | 0.5194 |   0.4629 |   0.6592 |  0      |     0      |     0.0086 | True           | True              |  0      |   0.0001 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'gamma_pos')           | CPT coordinate    | 255 | LINEAR          | 0.5194 |   0.4629 |   0.6592 |  0.4378 |     0.4343 |     0.572  | True           | False             |  0.1856 |   1      | False         |
+| ('architecture', 'sufficiency suite', 'gamma_neg')                             | CPT coordinate    | 255 | LINEAR          | 0.0438 |   0      |   0.2969 |  0.4921 |     0.4622 |     0.9054 | False          | False             |  1      |   1      | False         |
+| ('provenance', 'problem pool', 'gamma_neg')                                    | CPT coordinate    | 255 | LINEAR          | 0.2874 |   0.2412 |   0.4803 |  0.0829 |     0.048  |     0.2127 | True           | True              |  0.0013 |   0.0025 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'gamma_neg')           | CPT coordinate    | 255 | LINEAR          | 0.2874 |   0.2412 |   0.4803 |  0.3812 |     0.3566 |     0.572  | False          | False             |  0.9067 |   1      | False         |
+| ('architecture', 'sufficiency suite', 'tau')                                   | CPT coordinate    | 255 | LINEAR          | 0.7643 |   0.7015 |   0.8677 |  0.9805 |     0.9838 |     0.9907 | False          | False             |  1      |   1      | False         |
+| ('provenance', 'problem pool', 'tau')                                          | CPT coordinate    | 255 | LINEAR          | 0.628  |   0.5047 |   0.7908 |  0.1143 |     0.087  |     0.2407 | True           | True              |  0      |   0.0001 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'tau')                 | CPT coordinate    | 255 | LINEAR          | 0.628  |   0.5047 |   0.7908 |  0.6923 |     0.6891 |     0.8367 | False          | False             |  0.864  |   1      | False         |
+| ('architecture', 'sufficiency suite', 'rare_event_index')                      | behavioural index | 309 | nan             | 0.4965 |   0.4498 |   0.6102 |  0.7507 |     0.7774 |     0.8698 | False          | False             |  1      |   1      | False         |
+| ('provenance', 'problem pool', 'rare_event_index')                             | behavioural index | 309 | nan             | 0.6941 |   0.6746 |   0.7639 |  0.2301 |     0.2012 |     0.3552 | True           | True              |  0      |   0.0001 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'rare_event_index')    | behavioural index | 309 | nan             | 0.6941 |   0.6746 |   0.7639 |  0.43   |     0.4075 |     0.5788 | True           | True              |  0      |   0.0001 | True          |
+| ('architecture', 'sufficiency suite', 'certainty_index')                       | behavioural index | 309 | nan             | 0.4854 |   0.4125 |   0.6244 |  0.371  |     0.4161 |     0.5608 | True           | False             |  0.2657 |   1      | False         |
+| ('provenance', 'problem pool', 'certainty_index')                              | behavioural index | 309 | nan             | 0.6888 |   0.6378 |   0.7871 |  0.0632 |     0.0408 |     0.1273 | True           | True              |  0      |   0.0001 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'certainty_index')     | behavioural index | 309 | nan             | 0.6888 |   0.6378 |   0.7871 |  0.2093 |     0.1983 |     0.3616 | True           | True              |  0      |   0.0001 | True          |
+| ('architecture', 'sufficiency suite', 'reflection_index')                      | behavioural index | 309 | nan             | 0.5596 |   0.5063 |   0.6771 |  0.731  |     0.7666 |     0.8458 | False          | False             |  1      |   1      | False         |
+| ('provenance', 'problem pool', 'reflection_index')                             | behavioural index | 309 | nan             | 0.1026 |   0.0477 |   0.2278 |  0.0022 |     0      |     0.0224 | True           | True              |  0.0002 |   0.0007 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'reflection_index')    | behavioural index | 309 | nan             | 0.1026 |   0.0477 |   0.2278 |  0.1917 |     0.1715 |     0.3293 | False          | False             |  0.9672 |   1      | False         |
+| ('architecture', 'sufficiency suite', 'loss_aversion_kappa')                   | behavioural index | 309 | nan             | 0.2439 |   0.1834 |   0.4075 |  0.7239 |     0.7475 |     0.8712 | False          | False             |  1      |   1      | False         |
+| ('provenance', 'problem pool', 'loss_aversion_kappa')                          | behavioural index | 309 | nan             | 0.2314 |   0.1586 |   0.3872 |  0      |     0      |     0.0087 | True           | True              |  0      |   0.0001 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'loss_aversion_kappa') | behavioural index | 309 | nan             | 0.2314 |   0.1586 |   0.3872 |  0.5848 |     0.5572 |     0.734  | False          | False             |  1      |   1      | False         |
+| ('architecture', 'sufficiency suite', 'ev_consistency')                        | behavioural index | 309 | nan             | 0.6955 |   0.6701 |   0.7837 |  0.8003 |     0.8239 |     0.9038 | False          | False             |  1      |   1      | False         |
+| ('provenance', 'problem pool', 'ev_consistency')                               | behavioural index | 309 | nan             | 0.2304 |   0.1864 |   0.3583 |  0.1137 |     0.088  |     0.2039 | True           | False             |  0.0102 |   0.0102 | True          |
+| ('provenance', 'composite (pool x size x respondents)', 'ev_consistency')      | behavioural index | 309 | nan             | 0.2304 |   0.1864 |   0.3583 |  0.6984 |     0.6873 |     0.8086 | False          | False             |  1      |   1      | False         |
+
+## Table 23. Leave-one-architecture-out: floor clearing with each architecture removed in turn.
+
+_`none` is the full design. Interval rule with 200 within-cell resamples; provenance floor = problem pool and, separately, the composite floor; architecture floor = sufficiency suite. GBT is deterministic (ten identical seeds, no within-cell variance), LINEAR and SET are the architectures the screens remove on the small arms, so these are the rows to read first._
+
+| left_out    |   n_readouts |   archs_in_design |   median_omega2_dataset |   median_omega2_arch |   provenance_clears |   provenance_clears_composite |   architecture_clears |
+|:------------|-------------:|------------------:|------------------------:|---------------------:|--------------------:|------------------------------:|----------------------:|
+| none        |           11 |                 8 |                  0.3596 |               0.4869 |                  10 |                             3 |                     0 |
+| LINEAR      |           11 |                 7 |                  0.3596 |               0.4775 |                   9 |                             3 |                     0 |
+| MLP_S       |           11 |                 7 |                  0.3984 |               0.5378 |                  10 |                             4 |                     0 |
+| MLP_L       |           11 |                 7 |                  0.3137 |               0.4699 |                   9 |                             2 |                     0 |
+| RESMLP      |           11 |                 7 |                  0.3229 |               0.484  |                  10 |                             3 |                     0 |
+| SET         |           11 |                 7 |                  0.4655 |               0.494  |                  10 |                             3 |                     0 |
+| TRANSFORMER |           11 |                 7 |                  0.4142 |               0.5398 |                   9 |                             3 |                     0 |
+| CPT_NET     |           11 |                 7 |                  0.3598 |               0.4695 |                   8 |                             3 |                     0 |
+| GBT         |           11 |                 7 |                  0.3089 |               0.4834 |                  11 |                             2 |                     1 |
+
+## Table 24. H5. Do the distilled expressions sort by provenance or by architecture?
+
+_Each run's gain and loss expressions are evaluated on the (x/100, p) grid the regression was fitted on, so the comparison is between the functions recovered, not their strings; PERMANOVA permutes within strata of the other factor (2,000 permutations), silhouettes and distance-based R^2 are computed on standardised columns. The syntactic view uses operator counts and program length, which is what Fig. S2c displays. Four main arms, three seeds, eight architectures._
+
+| view                        |   n_runs |   dim |   permanova_F_dataset |   permanova_p_dataset |   permanova_F_arch |   permanova_p_arch |   silhouette_dataset |   silhouette_arch |   r2_dataset |   r2_arch |
+|:----------------------------|---------:|------:|----------------------:|----------------------:|-------------------:|-------------------:|---------------------:|------------------:|-------------:|----------:|
+| functional (CE grid)        |       96 |   168 |                2.2996 |                0.0005 |             3.3546 |             0.0005 |              -0.1001 |           -0.1661 |       0.0698 |    0.2106 |
+| syntactic (operator counts) |       96 |    14 |                0.8053 |                0.7606 |             1.4239 |             0.0125 |              -0.1013 |           -0.2052 |       0.0256 |    0.1017 |

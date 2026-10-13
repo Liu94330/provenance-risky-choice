@@ -336,13 +336,28 @@ if __name__ == "__main__":
         # CPT fit, so a reviewer could reasonably assume they are immune --
         # they are not, and including them turns the check from 6 readouts
         # into 11 and removes that escape route.
+        # The floor for a readout is measured on the same architectures that
+        # enter its observed effect. The screens drop an architecture from the
+        # main grid when too few of its runs survive (see screened_omega2), and
+        # that same architecture is then left out of the floor suites too;
+        # otherwise the observed effect and its floor describe different
+        # designs, and so do a point estimate and its interval.
+        def dropped_archs(screen):
+            d = main_all[main_all[screen]]
+            cnt = d.groupby(["dataset", "arch"]).size().unstack(fill_value=0)
+            return cnt.columns[(cnt < MIN_CELL).any()].tolist()
+
+        drop_for = {s: dropped_archs(s)
+                    for s in ["theory_identifiable", "identifiable"]}
         floor_arch, floor_pool = {}, {}
         for v in COORDS + INDICES:
             scr = "theory_identifiable" if v in COORDS else "identifiable"
-            ra = factorial_omega2(suf[suf[scr]], v,
+            keep = ~suf["arch"].isin(drop_for[scr])
+            ra = factorial_omega2(suf[suf[scr] & keep], v,
                                   ["n_problems", "n_subj"])
+            keep = ~sim["arch"].isin(drop_for[scr])
             rp = factorial_omega2(
-                sim[sim[scr]], v,
+                sim[sim[scr] & keep], v,
                 ["problems", "agent", "n_subj", "n_problems"])
             if ra:
                 floor_arch[v] = ra["omega2_arch"]
@@ -373,34 +388,30 @@ if __name__ == "__main__":
             # Point estimates alone cannot support the comparison; bootstrap
             # both sides within design cells and report whether the intervals
             # separate.
-            rr = main_all[main_all["theory_identifiable"]]
-            cnt = rr.groupby(["dataset", "arch"]).size().unstack(fill_value=0)
-            drop = cnt.columns[(cnt < MIN_CELL).any()].tolist()
-            rr = rr[~rr["arch"].isin(drop)]
-            ss = suf[suf["theory_identifiable"]]
-            ss = ss[~ss["arch"].isin(drop)]
-            sm = sim[sim["theory_identifiable"]]
-            sm = sm[~sm["arch"].isin(drop)]
-            rr_b = main_all[main_all["identifiable"]]
-            rr_b = rr_b[~rr_b["arch"].isin(drop)]
-            ss_b = suf[suf["identifiable"]]
-            ss_b = ss_b[~ss_b["arch"].isin(drop)]
-            sm_b = sim[sim["identifiable"]]
-            sm_b = sm_b[~sm_b["arch"].isin(drop)]
+            # Each readout's observed effect, its floors and their intervals
+            # all use the architecture set its own screen leaves (drop_for).
+            # Earlier versions applied the theory screen's dropped set to the
+            # behavioural bootstraps as well, which put a point estimate from
+            # eight architectures next to an interval from seven.
+            sets = {}
+            for scr, dr in drop_for.items():
+                sets[scr] = (
+                    main_all[main_all[scr] & ~main_all["arch"].isin(dr)],
+                    suf[suf[scr] & ~suf["arch"].isin(dr)],
+                    sim[sim[scr] & ~sim["arch"].isin(dr)])
             rows = []
             for v in COORDS + INDICES:
-                R, S, M = ((rr, ss, sm) if v in COORDS
-                           else (rr_b, ss_b, sm_b))
-                oa = bootstrap_omega2(
-                    R, v, "omega2_arch", ["dataset", "arch"],
+                scr = "theory_identifiable" if v in COORDS else "identifiable"
+                R, S, M = sets[scr]
+                ob = bootstrap_omega2(
+                    R, v, ["omega2_arch", "omega2_dataset"],
+                    ["dataset", "arch"],
                     lambda s, v=v: two_way_omega2(s, v))
+                oa, od = ob["omega2_arch"], ob["omega2_dataset"]
                 fa = bootstrap_omega2(
                     S, v, "omega2_arch", ["n_problems", "n_subj", "arch"],
                     lambda s, v=v: factorial_omega2(
                         s, v, ["n_problems", "n_subj"]))
-                od = bootstrap_omega2(
-                    R, v, "omega2_dataset", ["dataset", "arch"],
-                    lambda s, v=v: two_way_omega2(s, v))
                 fd = bootstrap_omega2(
                     M, v, "omega2_problems",
                     ["problems", "agent", "n_subj", "n_problems", "arch"],

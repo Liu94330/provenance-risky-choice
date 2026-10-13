@@ -184,12 +184,12 @@ Smallest swept arm size reaching 10% error (NaN = unreachable at that respondent
 On the fixed-agent arms every run shares the same true coordinates, so any omega^2 the readout still reports is manufactured by the readout. Architecture perturbs the prediction surface directly and has a high floor; swapping the problem pool barely moves it, so each observed effect is compared with the floor for its own factor.
 
               value  arch_observed  arch_artifact_floor  arch_excess  arch_survives  dataset_observed  dataset_artifact_floor  dataset_excess  dataset_survives
-              alpha          0.803                0.751        0.052           True             0.367                   0.062           0.305              True
-               beta          0.487                0.782       -0.296          False             0.360                   0.055           0.304              True
-                lam          0.211                0.667       -0.456          False             0.314                   0.048           0.266              True
-          gamma_pos          0.453                0.596       -0.143          False             0.519                   0.000           0.519              True
-          gamma_neg          0.044                0.490       -0.446          False             0.287                   0.078           0.209              True
-                tau          0.764                0.980       -0.216          False             0.628                   0.131           0.497              True
+              alpha          0.803                0.753        0.050           True             0.367                   0.047           0.319              True
+               beta          0.487                0.667       -0.180          False             0.360                   0.045           0.315              True
+                lam          0.211                0.659       -0.448          False             0.314                   0.033           0.281              True
+          gamma_pos          0.453                0.575       -0.122          False             0.519                   0.000           0.519              True
+          gamma_neg          0.044                0.492       -0.448          False             0.287                   0.083           0.205              True
+                tau          0.764                0.980       -0.216          False             0.628                   0.114           0.514              True
    rare_event_index          0.497                0.751       -0.254          False             0.694                   0.230           0.464              True
     certainty_index          0.485                0.371        0.114           True             0.689                   0.063           0.626              True
    reflection_index          0.560                0.731       -0.171          False             0.103                   0.002           0.100              True
@@ -202,17 +202,17 @@ Provenance effects clearing their floor: 11/11
 ### Bootstrap 95% intervals (400 resamples)
 
               value            family  arch_lo  arch_hi  arch_floor_lo  arch_floor_hi  arch_clears  ds_lo  ds_hi  ds_floor_lo  ds_floor_hi  ds_clears
-              alpha    CPT coordinate    0.783    0.860          0.765          0.894        False  0.288  0.510        0.026        0.123       True
-               beta    CPT coordinate    0.385    0.654          0.696          0.810        False  0.286  0.541        0.026        0.101       True
-                lam    CPT coordinate    0.152    0.377          0.677          0.838        False  0.258  0.462        0.011        0.085       True
-          gamma_pos    CPT coordinate    0.385    0.648          0.575          0.843        False  0.457  0.677        0.000        0.009       True
-          gamma_neg    CPT coordinate    0.000    0.269          0.467          0.898        False  0.237  0.451        0.050        0.217       True
-                tau    CPT coordinate    0.706    0.863          0.984          0.991        False  0.519  0.783        0.088        0.256       True
-   rare_event_index behavioural index    0.450    0.613          0.778          0.873        False  0.681  0.769        0.197        0.361       True
-    certainty_index behavioural index    0.379    0.619          0.349          0.507        False  0.641  0.797        0.041        0.129       True
-   reflection_index behavioural index    0.425    0.615          0.756          0.836        False  0.010  0.167        0.000        0.009       True
-loss_aversion_kappa behavioural index    0.241    0.489          0.660          0.818        False  0.272  0.503        0.000        0.014       True
-     ev_consistency behavioural index    0.672    0.795          0.804          0.891        False  0.089  0.241        0.098        0.225      False
+              alpha    CPT coordinate    0.783    0.860          0.770          0.895        False  0.301  0.501        0.027        0.114       True
+               beta    CPT coordinate    0.404    0.650          0.694          0.812        False  0.280  0.532        0.025        0.105       True
+                lam    CPT coordinate    0.155    0.363          0.675          0.823        False  0.260  0.451        0.012        0.089       True
+          gamma_pos    CPT coordinate    0.379    0.636          0.571          0.837        False  0.463  0.659        0.000        0.009       True
+          gamma_neg    CPT coordinate    0.000    0.297          0.462          0.905        False  0.241  0.480        0.048        0.213       True
+                tau    CPT coordinate    0.702    0.868          0.984          0.991        False  0.505  0.791        0.087        0.241       True
+   rare_event_index behavioural index    0.450    0.610          0.777          0.870        False  0.675  0.764        0.201        0.355       True
+    certainty_index behavioural index    0.412    0.624          0.416          0.561        False  0.638  0.787        0.041        0.127       True
+   reflection_index behavioural index    0.506    0.677          0.767          0.846        False  0.048  0.228        0.000        0.022       True
+loss_aversion_kappa behavioural index    0.183    0.408          0.748          0.871        False  0.159  0.387        0.000        0.009       True
+     ev_consistency behavioural index    0.670    0.784          0.824          0.904        False  0.186  0.358        0.088        0.204      False
 
 Architecture: interval strictly above its floor in 0/11 coordinates
 Provenance:   interval strictly above its floor in 10/11 coordinates

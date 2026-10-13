@@ -36,6 +36,7 @@ if [ "${QUICK:-0}" = "1" ]; then Q="--quick"; fi
 "$PY" code/scripts/04_transfer_matrix.py
 "$PY" code/scripts/05_symbolic_distill.py
 "$PY" code/scripts/06_analyze.py
+"$PY" code/scripts/11_robustness.py
 "$PY" code/scripts/07_figures.py
 "$PY" code/scripts/08_paper_outputs.py
 "$PY" shapcode/run_decomposition.py

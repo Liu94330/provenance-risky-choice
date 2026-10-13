@@ -216,34 +216,65 @@ def sufficiency_threshold(err_df, size_col, tol=0.10, err_col="mean_rel_err"):
     return pd.DataFrame(out)
 
 
+def cell_resampler(df, strata):
+    """Within-cell bootstrap: returns draw(rng) -> a resample of `df` in which
+    every design cell (defined by `strata`) is resampled with replacement to
+    its own size, so the layout stays balanced in every replicate. Works on
+    positional indices, which is an order of magnitude faster than a
+    groupby/apply with per-cell sampling and gives the same distribution."""
+    cells = [np.asarray(ix) for ix in df.groupby(strata).indices.values()]
+
+    def draw(rng):
+        take = np.concatenate([c[rng.integers(0, len(c), len(c))]
+                               for c in cells])
+        return df.iloc[take]
+    return draw
+
+
 def bootstrap_omega2(df, value, effect, strata, estimator, n_boot=400,
-                     seed=0):
+                     seed=0, return_samples=False):
     """Percentile CI for one omega^2, resampling runs within design cells.
 
     Comparing an observed effect with an artifact floor is only meaningful
     with intervals: both are point estimates from a few hundred runs, and
     without them "0.80 versus 0.75" says nothing. Resampling happens within
     cells so the design stays balanced in every replicate.
+
+    `effect` may be one key or a list of keys of the estimator's result; the
+    estimator runs once per replicate either way, so asking for several
+    effects at once (e.g. both factors of a two-way decomposition) costs
+    nothing extra. With `return_samples` the full bootstrap distribution is
+    returned as well, for tests that need more than an interval.
     """
     rng = np.random.default_rng(seed)
-    out = []
+    effects = [effect] if isinstance(effect, str) else list(effect)
+    draw = cell_resampler(df, strata)
+    out = {e: [] for e in effects}
     for _ in range(n_boot):
-        s = df.groupby(strata, group_keys=False).apply(
-            lambda x: x.sample(len(x), replace=True,
-                               random_state=int(rng.integers(1 << 31))))
         try:
-            r = estimator(s)
+            r = estimator(draw(rng))
         except Exception:
             continue
         if r is None:
             continue
-        v = r.get(effect) if isinstance(r, dict) else r
-        if v is not None and np.isfinite(v):
-            out.append(v)
-    if not out:
-        return dict(value=value, lo=np.nan, hi=np.nan, n_boot=0)
-    lo, hi = np.percentile(out, [2.5, 97.5])
-    return dict(value=value, lo=float(lo), hi=float(hi), n_boot=len(out))
+        for e in effects:
+            v = r.get(e) if isinstance(r, dict) else r
+            if v is not None and np.isfinite(v):
+                out[e].append(v)
+
+    def summarise(vals):
+        if not vals:
+            d = dict(value=value, lo=np.nan, hi=np.nan, n_boot=0)
+        else:
+            lo, hi = np.percentile(vals, [2.5, 97.5])
+            d = dict(value=value, lo=float(lo), hi=float(hi),
+                     n_boot=len(vals))
+        if return_samples:
+            d["samples"] = np.asarray(vals, dtype=float)
+        return d
+    if isinstance(effect, str):
+        return summarise(out[effect])
+    return {e: summarise(out[e]) for e in effects}
 
 
 def artifact_corrected(real, artifact_arch, artifact_pool, params):

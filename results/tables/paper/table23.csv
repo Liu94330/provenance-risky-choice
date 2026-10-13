@@ -1,0 +1,10 @@
+left_out,n_readouts,archs_in_design,median_omega2_dataset,median_omega2_arch,provenance_clears,provenance_clears_composite,architecture_clears
+none,11,8,0.360,0.487,10,3,0
+LINEAR,11,7,0.360,0.478,9,3,0
+MLP_S,11,7,0.398,0.538,10,4,0
+MLP_L,11,7,0.314,0.470,9,2,0
+RESMLP,11,7,0.323,0.484,10,3,0
+SET,11,7,0.466,0.494,10,3,0
+TRANSFORMER,11,7,0.414,0.540,9,3,0
+CPT_NET,11,7,0.360,0.470,8,3,0
+GBT,11,7,0.309,0.483,11,2,1

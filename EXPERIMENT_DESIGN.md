@@ -94,7 +94,11 @@ and is reported openly: median dataset 0.360 vs architecture 0.487 across the
 11 readouts, with dataset larger on 5/11; multivariate fingerprints agree with
 the uncorrected view (PERMANOVA architecture F=27.2 vs dataset F=17.8, both
 p=0.0005; silhouette 0.136 by architecture vs 0.058 by dataset). The correction
-is the claim, not the raw decomposition.
+is the claim, not the raw decomposition. The count, not the ordering, is
+floor-dependent: under the harshest composite provenance floor (pool x size x
+respondents as one factor) provenance clears 3/11, while architecture clears
+0/11 under every floor definition, under Holm correction, and with any single
+architecture removed (`11_robustness.py`, Tables 21-23, Fig. S9).
 
 **H2.** With the data-generating agent held literally identical, the theory
 recovered by the same architectures differs systematically between the two
@@ -124,11 +128,17 @@ CPC18-trained models, collapsing to 0.468 and -0.027 on the 48 unseen
 competition problems. The asymmetry is confounded with CPC18 having only 182
 problems and must be read together with the `size_control` arms.
 
-**H5 (descriptive, supplementary).** Symbolic distillation of the
-certainty-equivalent surface is reported as a recovery check rather than as a
-test: Figure S2 shows CE-surface r^2 and expression complexity by arm (median
-r^2 ~0.99 everywhere; the arms differ in the lower tail). No clustering
-statistic over the distilled expressions is computed.
+**H5 (tested; not supported).** Symbolic distillation of the
+certainty-equivalent surface was hypothesised to yield expression families
+that cluster by dataset and not by architecture. Tested by evaluating each
+run's gain and loss expressions on the (x/100, p) grid they were fitted on and
+applying the fingerprint PERMANOVA to the 96 main-arm runs, the opposite holds:
+architecture is the larger factor (pseudo-F 3.4 vs 2.3, distance-R^2 0.21 vs
+0.07), and on the operator-count view provenance is not significant (p = 0.76).
+This is the behaviour of every read-out before floor correction, and no
+fixed-agent arm was distilled, so the read-out has no floor of its own. Figure
+S2 therefore reports distillation quality and arm-specific fragility only; the
+clustering statistics are in Table 24 (`11_robustness.py`).
 
 **Controls.** Size-matched subsampling (all arms to 182 problems);
 feature-matched importance reweighting of c13k toward the CPC problem

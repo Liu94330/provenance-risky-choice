@@ -68,6 +68,26 @@
 错误的数字；`results/summary.md` 把两者并排打印出来，并在每次运行时由
 `06_analyze.py` 重新生成。
 
+## 这个结论有多稳？
+
+`code/scripts/11_robustness.py` 用受控因子设计能提供的每一种基线重算 floor 比较、对 11 个检验做 Holm 校正、逐个剔除架构，并把符号读出量从"看图"变成"检验"（`results/robustness.md`、`results/tables/robustness_*.csv`、`symbolic_clustering.csv`；图 S9，表 21–24）。
+
+**通过的数量依赖基线定义；两个因素的排序不依赖。** 论文用的题目池基线是三个来源成分里最小的（中位 0.047）。换更严的定义，来源通过的读出量减少——arm-size 基线 5/11、最大成分基线 4/11、复合基线（题目池 × 规模 × 被试数作为一个 8 水平因子，中位 0.430）**3/11**——在最严基线下活下来的是稀有事件指数、确定性指数和 β。架构在**全部 7 种基线定义下都是 0/11**，区间法则和 Holm 校正的 bootstrap *p* 结论一致。
+
+| 来源基线 | 中位基线 | 通过数：点估计 / 区间 / Holm |
+|---|---:|---|
+| 题目池（论文所用） | 0.047 | 11 / 10 / 11 |
+| 每题被试数 | 0.002 | 10 / 9 / 10 |
+| arm size | 0.185 | 7 / 5 / 5 |
+| 三者取最大 | 0.230 | 7 / 4 / 4 |
+| 复合 | 0.430 | 5 / 3 / 3 |
+
+**没有任何单个架构撑起结果。** 逐一剔除任一架构后，来源在题目池基线下仍通过 8–11 个、复合基线下 2–4 个；架构始终 0 个，唯一例外是剔除确定性的 GBT（10 个 seed 完全相同、组内方差为零）后，确定性指数这一项通过。
+
+**符号读出量并不复现主结论，论文现已如实写明。** 把每个 run 蒸馏出的 CE(x, p) 表达式在其拟合网格上求值、将 96 个主臂 run 作为函数比较，PERMANOVA 显示架构是更大的因素（*F* = 3.4 vs 2.3；距离 R² 0.21 vs 0.07）；在算子计数视图下来源效应不显著（*p* = 0.76）。这正是所有读出量在 floor 校正*之前*的表现，而符号蒸馏没有对固定智能体数据臂做过，因此没有自己的基线。早先的稿子写"表达式按来源聚类"，数据不支持这句话，现已替换为检验结果。
+
+**同时修了一个一致性 bug。** `06_analyze.py` 只按 theory 筛选算了一次被剔除的架构集合，并把它也用到了行为指数的 bootstrap 上——于是 8 个架构的点估计旁边放着 7 个架构的区间（旧表 19 里 κ = 0.231 落在自身区间 [0.272, 0.503] 之外就是这个原因）。现在每个读出量的点估计、基线和区间使用同一组架构。
+
 ## 仓库结构
 
 ```
@@ -80,7 +100,7 @@ data/external/          redistributable CPC18 aggregates + ATTRIBUTION.md
 data/processed/         generated arm caches (.npz) — not in git, ~1 min to rebuild
 results/                summary.md, analysis tables and per-run records
                         (the 2,240 raw run directories themselves are not in git)
-paper_results/          manuscript deliverables: 6 main figures, 8 supplementary, 20 tables
+paper_results/          manuscript deliverables: 6 main figures, 9 supplementary, 24 tables
 ```
 
 以下内容不在 git 中，原因是它们要么可再生成、要么不归我们再分发（见
@@ -150,6 +170,7 @@ C13K_DIR=/path/to/choices13k-main QUICK=1 bash run_all.sh    # ~30 min smoke ver
 | 04 | `04_transfer_matrix.py` | 迁移矩阵 + 完备度归一化 | seconds |
 | 05 | `05_symbolic_distill.py` | 对 CE 曲面的符号蒸馏 | ~22 s/model |
 | 06 | `06_analyze.py` | ω² 分解、PERMANOVA、人为基线、自助法、对照 | ~2 min |
+| 11 | `11_robustness.py` | 基线定义敏感性、Holm 校正、留一架构、符号表达式聚类 | ~8 分钟 |
 | 07–08 | `07_figures.py`, `08_paper_outputs.py` | 工作图、稿件表格 | ~30 s |
 | — | `shapcode/run_decomposition.py`, `run_figures.py` | 归因读出量及其图 | minutes |
 | 10 | `10_main_figures.py` | 组装 `paper_results/` | seconds |

@@ -8,8 +8,8 @@
       "pseudo_F": 27.176408750515137,
       "p_value": 0.0004997501249375312
     },
-    "silhouette_by_dataset": 0.05848096682813908,
-    "silhouette_by_arch": 0.13557322447510828,
+    "silhouette_by_dataset": 0.05848096687788491,
+    "silhouette_by_arch": 0.13557322454627208,
     "n": 309
   },
   "all_runs": {
@@ -21,8 +21,8 @@
       "pseudo_F": 24.068554128779493,
       "p_value": 0.0004997501249375312
     },
-    "silhouette_by_dataset": 0.05712617837250232,
-    "silhouette_by_arch": 0.11551268982334702,
+    "silhouette_by_dataset": 0.057126178344666434,
+    "silhouette_by_arch": 0.11551268976610196,
     "n": 320
   }
 }

@@ -244,45 +244,238 @@ def _p_floor_wide(ax, bt, which, show_y=True):
                  color=MUTED, pad=4)
 
 
-def main2_artifact_floor(bt, figdir):
-    """The headline, in three panels.
+def _strip(ax, x, vals, color, marker="o", s=5.5, alpha=0.55, rng=None,
+           width=0.26):
+    vals = np.asarray(vals, dtype=float)
+    vals = vals[np.isfinite(vals)]
+    if not len(vals):
+        return
+    rng = rng or np.random.default_rng(0)
+    jit = rng.uniform(-width, width, len(vals))
+    ax.scatter(x + jit, vals, s=s, c=color, marker=marker, alpha=alpha,
+               linewidths=0, zorder=3)
+    ax.plot([x - 0.36, x + 0.36], [np.median(vals)] * 2, color=INK, lw=1.1,
+            zorder=4)
 
-    Grey spans are what the readout reports when every run shares the same
-    true coordinates -- manufactured, not found. An observed interval has to
-    sit clear of that to mean anything. All eleven readouts appear, including
-    the behavioural indices, which never touch the CPT fit and which a reader
-    would otherwise assume are immune.
+
+def _p_concept_row(ax, base, sim, v, screen, ac, show_x, ylab):
+    """One read-out, three blocks: fixed-agent runs by architecture (where the
+    architecture floor comes from), fixed-agent runs by problem pool (where
+    the provenance floor comes from), real corpora by training arm (the
+    observed effects)."""
+    rng = np.random.default_rng(1)
+    suf = base[base["dataset"].str.startswith("suf_", na=False)
+               & base[screen]]
+    sm = sim[(sim["agent"] == "desc") & sim[screen]]
+    main = base[base["dataset"].isin(["c13k_exp", "c13k_desc", "cpc18_exp",
+                                      "cpc18_desc"]) & base[screen]]
+    x = 0.0
+    xt, xl, rot = [], [], []
+    for a in ARCH_ORDER:
+        _strip(ax, x, suf[suf["arch"] == a][v], AR_C, rng=rng)
+        xt.append(x); xl.append(a.replace("TRANSFORMER", "TRANSF.")); rot.append(True)
+        x += 1
+    x += 1.0
+    c2 = []
+    for pool, lab in [("c13k", "c13k\npool"), ("cpc", "CPC18\npool")]:
+        _strip(ax, x, sm[sm["problems"] == pool][v], DS_C, alpha=0.45,
+               rng=rng, width=0.3)
+        xt.append(x); xl.append(lab); rot.append(False); c2.append(x)
+        x += 1.55
+    x += 0.6
+    c3 = []
+    for d in ["c13k_exp", "c13k_desc", "cpc18_exp", "cpc18_desc"]:
+        sub = main[main["dataset"] == d]
+        for a in ARCH_ORDER:
+            _strip(ax, x, sub[sub["arch"] == a][v], DS_C,
+                   marker=ARCH_MARKERS.get(a, "o"), s=7, alpha=0.75, rng=rng,
+                   width=0.34)
+        ax.plot([x - 0.4, x + 0.4], [sub[v].median()] * 2, color=INK,
+                lw=1.1, zorder=4)
+        xt.append(x); xl.append(DATASET_SHORT.get(d, d)); rot.append(False)
+        c3.append(x)
+        x += 1.55
+    allv = pd.concat([suf[v], sm[v], main[v]]).dropna()
+    lo, hi = allv.quantile(0.005), allv.quantile(0.995)
+    rng_ = hi - lo
+    ax.set_ylim(lo - 0.06 * rng_, hi + 0.52 * rng_)
+    ax.set_xlim(-0.7, x - 0.6)
+    sep1 = (xt[7] + c2[0]) / 2
+    sep2 = (c2[-1] + c3[0]) / 2
+    for xs in (sep1, sep2):
+        ax.axvline(xs, color=FAINT, lw=0.7, ls=":")
+    ax.set_ylabel(ylab, fontsize=6.0)
+    r = ac.loc[v]
+    y_txt = hi + 0.49 * rng_
+    box = dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85)
+    ax.text(3.5, y_txt,
+            r"floor:  $\omega^2_{\rm arch}$ = " f"{r.arch_artifact_floor:.2f}",
+            ha="center", va="top", fontsize=5.4, color=AR_C, bbox=box)
+    ax.text(np.mean(c2), y_txt,
+            "floor:\n" r"$\omega^2_{\rm pool}$ = "
+            f"{r.dataset_artifact_floor:.2f}",
+            ha="center", va="top", fontsize=5.4, color=DS_C, bbox=box)
+    ax.text(np.mean(c3), y_txt,
+            "observed:\n" r"$\omega^2_{\rm prov}$ = "
+            f"{r.dataset_observed:.2f}" "\n" r"$\omega^2_{\rm arch}$ = "
+            f"{r.arch_observed:.2f}",
+            ha="center", va="top", fontsize=5.4, color=INK, bbox=box)
+    if show_x:
+        ax.set_xticks(xt, xl, fontsize=4.8)
+        for lab, rr in zip(ax.get_xticklabels(), rot):
+            if rr:
+                lab.set_rotation(50); lab.set_ha("right")
+    else:
+        ax.set_xticks(xt, [""] * len(xt))
+    ax.tick_params(axis="x", length=0)
+    return 3.5, float(np.mean(c2)), float(np.mean(c3))
+
+
+def _p_ridge(ax, bt, boot, which, show_y=True):
+    """Bootstrap distribution of the observed effect against that of its
+    floor, one ridge per read-out."""
+    col = AR_C if which == "arch" else DS_C
+    d = bt.sort_values(["family", "value"], ascending=[False, True])
+    rows = [v for v in READOUT_ORDER if v in d["value"].tolist()]
+    grid = np.linspace(0, 1, 400)
+    n = len(rows)
+    for i, v in enumerate(rows):
+        y0 = n - 1 - i
+        obs = boot[f"{v}|obs_{which}"]
+        flo = boot[f"{v}|floor_{which}"]
+        for arr, c, al, z in [(flo, "#9a9a9a", 0.85, 2), (obs, col, 0.72, 3)]:
+            k = _kde(arr, grid)
+            k = k / max(k.max(), 1e-9) * 0.9
+            ax.fill_between(grid, y0, y0 + k, color=c, alpha=al, lw=0,
+                            zorder=z)
+            ax.plot(grid, y0 + k, color=c, lw=0.45, zorder=z + 0.1)
+        r = d[d["value"] == v].iloc[0]
+        m = r[f"{which}_lo"] - r[f"{which}_floor_hi"]
+        ok = bool(r[f"{which}_clears"])
+        ax.text(1.03, y0 + 0.12, f"{m:+.2f}", ha="left", va="bottom",
+                fontsize=5.2, color=col if ok else MUTED,
+                fontweight="bold" if ok else "normal", clip_on=False)
+    ax.set_yticks([n - 1 - i for i in range(n)],
+                  [_compact(v) for v in rows] if show_y else [""] * n,
+                  fontsize=5.4)
+    ax.axhline(5 - 0.06, color=FAINT, lw=0.7, ls=":")
+    ax.set_ylim(-0.1, n + 0.05)
+    ax.set_xlim(0, 1)
+    ax.set_xlabel(r"$\omega^2$")
+    k = int(bt[f"{which}_clears"].sum())
+    nm = "architecture" if which == "arch" else "provenance"
+    ax.set_title(f"{nm}: clears its floor on {k}/{len(bt)}", fontsize=6.4,
+                 color=MUTED, pad=4)
+
+
+def main2_artifact_floor(bt, ac, boot, base, sim, figdir):
+    """The headline, in four panels.
+
+    a  what the floor is: with the generating theory held identical, the
+       read-out still spreads across architectures (orange) -- that spread
+       is the architecture floor; swapping the problem pool barely moves it
+       (that is the provenance floor); real corpora (right) spread by arm.
+    b  architecture: bootstrap distribution of the observed omega^2 against
+       the floor's, per read-out. c  the same for provenance.
+    d  both margins at once: every read-out in the quadrant where provenance
+       clears and architecture does not.
+    `boot` is artifact_boot_samples.npz from 06; `ac` artifact_corrected.csv
+    indexed by value; `base`/`sim` the run-level tables.
     """
-    with plt.rc_context(RC):
-        fig, axes = plt.subplots(1, 3, figsize=(10.4, 3.6))
-        _p_floor_wide(axes[0], bt, "arch")
-        _tag(axes[0], "a")
-        _p_floor_wide(axes[1], bt, "ds", show_y=False)
-        _tag(axes[1], "b")
+    from matplotlib import gridspec
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+    ac = ac.set_index("value") if "value" in ac.columns else ac
 
-        ax = axes[2]
-        d = bt.sort_values(["family", "value"], ascending=[False, True])
-        y = np.arange(len(d))
-        ax.axvline(0, color=INK, lw=1.0, zorder=4)
-        ax.barh(y - 0.2, d["arch_lo"] - d["arch_floor_hi"], height=0.36,
-                color=AR_C, zorder=3, label="architecture")
-        ax.barh(y + 0.2, d["ds_lo"] - d["ds_floor_hi"], height=0.36,
-                color=DS_C, zorder=3, label="provenance")
-        ax.set_yticks(y, [_pname(v).split(" (")[0].replace("_", " ")
-                          for v in d["value"]], fontsize=5.6)
-        ax.invert_yaxis()
-        ax.set_xlabel("observed low  $-$  floor high")
-        ax.set_title("positive = clears its own floor", fontsize=6.4,
-                     color=MUTED, pad=4)
-        ax.legend(fontsize=5.8, loc="upper center",
-                  bbox_to_anchor=(0.5, -0.13), ncol=2)
-        _tag(ax, "c")
-        fig.text(0.5, -0.02,
-                 "Grey: bootstrap 95% interval of what the readout reports "
-                 "when the true coordinates are identical across runs. "
-                 "Coloured: observed 95% interval.",
-                 ha="center", va="top", fontsize=6.2, color=MUTED)
-        fig.tight_layout(w_pad=1.8)
+    with plt.rc_context(RC):
+        fig = plt.figure(figsize=(11.4, 4.7))
+        gs = gridspec.GridSpec(1, 4, figure=fig,
+                               width_ratios=[1.85, 0.9, 0.9, 1.0],
+                               wspace=0.5)
+        gsa = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=gs[0],
+                                               hspace=0.12)
+        ax1 = fig.add_subplot(gsa[0]); ax2 = fig.add_subplot(gsa[1])
+        cx = _p_concept_row(ax1, base, sim, "rare_event_index",
+                            "identifiable", ac, False, "rare-event index")
+        _p_concept_row(ax2, base, sim, "tau", "theory_identifiable", ac,
+                       True, r"$\tau$")
+        for xc, txt, col in [(cx[0], "by architecture", AR_C),
+                             (cx[1], "by pool", DS_C),
+                             (cx[2], "by training arm", INK)]:
+            ax1.text(xc, 1.02, txt, ha="center", va="bottom",
+                     transform=ax1.get_xaxis_transform(), fontsize=5.6,
+                     color=col)
+        ax1.text((cx[0] + cx[1]) / 2, 1.13,
+                 "fixed agent (truth identical)", ha="center", va="bottom",
+                 transform=ax1.get_xaxis_transform(), fontsize=5.8,
+                 color=MUTED)
+        ax1.text(cx[2], 1.13, "real corpora", ha="center", va="bottom",
+                 transform=ax1.get_xaxis_transform(), fontsize=5.8,
+                 color=MUTED)
+        _tag(ax1, "a")
+
+        axb = fig.add_subplot(gs[1]); _p_ridge(axb, bt, boot, "arch")
+        _tag(axb, "b")
+        axc = fig.add_subplot(gs[2]); _p_ridge(axc, bt, boot, "ds",
+                                               show_y=False)
+        _tag(axc, "c")
+        axb.legend(handles=[Patch(color="#9a9a9a", alpha=0.85,
+                                  label="floor (fixed agent)"),
+                            Patch(color=AR_C, alpha=0.72,
+                                  label="observed, architecture"),
+                            Patch(color=DS_C, alpha=0.72,
+                                  label="observed, provenance")],
+                   fontsize=5.2, loc="upper center", ncol=3, frameon=False,
+                   bbox_to_anchor=(1.05, -0.14), columnspacing=1.0,
+                   handlelength=1.4)
+
+        # d: quadrant of margins
+        ax = fig.add_subplot(gs[3])
+        d = bt.copy()
+        d["mx"] = d["arch_lo"] - d["arch_floor_hi"]
+        d["my"] = d["ds_lo"] - d["ds_floor_hi"]
+        xlo = min(d["mx"].min() - 0.06, -0.6)
+        xhi = max(d["mx"].max() + 0.08, 0.12)
+        ylo = min(d["my"].min() - 0.08, -0.12)
+        yhi = max(d["my"].max() + 0.08, 0.6)
+        ax.axhspan(0, yhi, xmin=0, xmax=(0 - xlo) / (xhi - xlo),
+                   color=DS_C, alpha=0.07, zorder=0)
+        ax.axhline(0, color=INK, lw=0.8, zorder=2)
+        ax.axvline(0, color=INK, lw=0.8, zorder=2)
+        for fam, mk in [("CPT coordinate", "o"), ("behavioural index", "s")]:
+            sub = d[d["family"] == fam]
+            ax.scatter(sub["mx"], sub["my"], s=26, marker=mk, c=INK,
+                       edgecolors="white", linewidths=0.5, zorder=4,
+                       label=fam)
+        order = d.sort_values("my")
+        for k, r in enumerate(order.itertuples()):
+            dx = 5 if (k % 2 == 0) else -5
+            ax.annotate(_compact(r.value), (r.mx, r.my),
+                        xytext=(dx, 3 if k % 2 == 0 else -3),
+                        textcoords="offset points", fontsize=5.0,
+                        ha="left" if dx > 0 else "right", va="center",
+                        color=INK)
+        n_q = int(((d["mx"] < 0) & (d["my"] > 0)).sum())
+        ax.text(xlo + 0.02, yhi - 0.02,
+                f"provenance clears,\narchitecture does not:\n{n_q}/{len(d)}",
+                ha="left", va="top", fontsize=5.8, color=DS_C)
+        ax.set_xlim(xlo, xhi); ax.set_ylim(ylo, yhi)
+        ax.set_xlabel("architecture margin", fontsize=6.2)
+        ax.set_ylabel("provenance margin", fontsize=6.2)
+        ax.legend(fontsize=5.2, loc="lower right", frameon=False,
+                  handletextpad=0.3)
+        ax.set_title("both margins at once", fontsize=6.4, color=MUTED,
+                     pad=4)
+        _tag(ax, "d")
+
+        fig.text(0.5, -0.04,
+                 "a: one point per trained model, black bars are medians.  "
+                 "b\u2013d: 400 within-cell bootstrap resamples; margin = "
+                 "observed lower bound \u2212 floor upper bound.\n"
+                 "The floor is what the read-out reports on fixed-agent "
+                 "arms, where every run encodes the same theory.",
+                 ha="center", va="top", fontsize=6.0, color=MUTED)
+        fig.tight_layout(w_pad=1.0)
         _save(fig, figdir, "main2_artifact_floor.pdf")
 
 
@@ -806,6 +999,16 @@ ARCH_DEFS = ["sufficiency suite", "controlled suite"]
 
 def _short(v):
     return _pname(v).split(" (")[0].replace("_", " ")
+
+
+COMPACT = {"rare_event_index": "rare-event", "certainty_index": "certainty",
+           "reflection_index": "reflection",
+           "loss_aversion_kappa": r"loss-aversion $\hat\kappa$",
+           "ev_consistency": "EV-consistency"}
+
+
+def _compact(v):
+    return COMPACT.get(v, _short(v))
 
 
 def supp_robustness(fd, fs, jk, sym, boot, perm, figdir):

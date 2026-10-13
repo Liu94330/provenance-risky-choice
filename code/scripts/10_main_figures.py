@@ -175,18 +175,23 @@ if __name__ == "__main__":
         os.path.join(tabdir, "table11.csv")) else None
     if lad is None:
         lad = pd.read_csv(os.path.join(tabdir, "paper", "table11.csv"))
-    # keep both screens: panel e plots them as two series
-    if bt is not None and err is not None and lad is not None:
-        main2_artifact_floor(bt, figdir)
-        print("  fig2 artifact floor")
 
-    fac = table("controlled_factorial.csv")
     sim = base[base["dataset"].str.startswith("sim_", na=False)].copy()
-    if fac is not None and len(sim):
+    if len(sim):
         f = sim["dataset"].str.extract(
             r"sim_(?P<problems>[a-z0-9]+)_(?P<agent>desc|exp)"
             r"_n(?P<n_subj>\d+)_p(?P<n_problems>\d+)")
         sim = pd.concat([sim, f], axis=1)
+
+    ac = table("artifact_corrected.csv")
+    bootp = os.path.join(tabdir, "artifact_boot_samples.npz")
+    if (bt is not None and ac is not None and os.path.exists(bootp)
+            and len(sim)):
+        main2_artifact_floor(bt, ac, np.load(bootp), base, sim, figdir)
+        print("  fig2 artifact floor")
+
+    fac = table("controlled_factorial.csv")
+    if fac is not None and len(sim):
         main3_causal(fac, sim, base[base["theory_identifiable"]],
                      ctrl[ctrl["theory_identifiable"]], figdir,
                      true_theta=TRUE_THETA)

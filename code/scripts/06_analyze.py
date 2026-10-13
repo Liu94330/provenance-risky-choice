@@ -400,23 +400,31 @@ if __name__ == "__main__":
                     suf[suf[scr] & ~suf["arch"].isin(dr)],
                     sim[sim[scr] & ~sim["arch"].isin(dr)])
             rows = []
+            samples = {}   # full bootstrap distributions, for the figure
             for v in COORDS + INDICES:
                 scr = "theory_identifiable" if v in COORDS else "identifiable"
                 R, S, M = sets[scr]
                 ob = bootstrap_omega2(
                     R, v, ["omega2_arch", "omega2_dataset"],
                     ["dataset", "arch"],
-                    lambda s, v=v: two_way_omega2(s, v))
+                    lambda s, v=v: two_way_omega2(s, v),
+                    return_samples=True)
                 oa, od = ob["omega2_arch"], ob["omega2_dataset"]
                 fa = bootstrap_omega2(
                     S, v, "omega2_arch", ["n_problems", "n_subj", "arch"],
                     lambda s, v=v: factorial_omega2(
-                        s, v, ["n_problems", "n_subj"]))
+                        s, v, ["n_problems", "n_subj"]),
+                    return_samples=True)
                 fd = bootstrap_omega2(
                     M, v, "omega2_problems",
                     ["problems", "agent", "n_subj", "n_problems", "arch"],
                     lambda s, v=v: factorial_omega2(
-                        s, v, ["problems", "agent", "n_subj", "n_problems"]))
+                        s, v, ["problems", "agent", "n_subj", "n_problems"]),
+                    return_samples=True)
+                samples[f"{v}|obs_arch"] = oa["samples"]
+                samples[f"{v}|obs_ds"] = od["samples"]
+                samples[f"{v}|floor_arch"] = fa["samples"]
+                samples[f"{v}|floor_ds"] = fd["samples"]
                 rows.append(dict(
                     value=v, family=("CPT coordinate" if v in COORDS
                                      else "behavioural index"),
@@ -429,6 +437,8 @@ if __name__ == "__main__":
             bt = pd.DataFrame(rows)
             bt.to_csv(os.path.join(tabdir, "artifact_bootstrap.csv"),
                       index=False)
+            np.savez_compressed(
+                os.path.join(tabdir, "artifact_boot_samples.npz"), **samples)
             lines.append("### Bootstrap 95% intervals (400 resamples)\n")
             lines.append(bt.round(3).to_string(index=False))
             lines.append(

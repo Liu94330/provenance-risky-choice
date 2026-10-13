@@ -204,13 +204,23 @@ def holm(p):
 # 1 + 2: floor definitions and family-wise correction
 # ---------------------------------------------------------------------------
 
-def floor_definition_table(sets):
+def floor_definition_table(sets, samples=None):
+    """`samples`, if a dict, receives every bootstrap distribution keyed
+    '<readout>|<quantity>' so the figure can draw the distributions rather
+    than only their endpoints."""
     rows = []
     for v in COORDS + INDICES:
         scr = screen_of(v)
         R, M, S, dr = sets[scr]
         pt = point_all(R, M, S, v)
         bt = boot_all(R, M, S, v, N_BOOT)
+        if samples is not None:
+            samples[f"{v}|obs_ds"] = bt["obs_ds"]
+            samples[f"{v}|obs_arch"] = bt["obs_arch"]
+            for k, arr in bt["floors_ds"].items():
+                samples[f"{v}|floor_ds|{k}"] = arr
+            for k, arr in bt["floors_arch"].items():
+                samples[f"{v}|floor_arch|{k}"] = arr
         fam = "CPT coordinate" if v in COORDS else "behavioural index"
         for factor, okey, fkey in [("architecture", "obs_arch", "floors_arch"),
                                    ("provenance", "obs_ds", "floors_ds")]:
@@ -412,10 +422,20 @@ def distance_r2(F, labels):
     return float((sst - ssw) / sst) if sst > 0 else np.nan
 
 
-def symbolic_stats(info, F, view):
+def symbolic_stats(info, F, view, extra=None):
+    """`extra`, if a dict, receives the permutation nulls and the distance
+    matrix of this view for plotting."""
     ds, ar = info["dataset"].to_numpy(), info["arch"].to_numpy()
-    pd_ = permanova(F, ds, strata=ar, seed=SEED)
-    pa_ = permanova(F, ar, strata=ds, seed=SEED)
+    pd_ = permanova(F, ds, strata=ar, seed=SEED, return_null=True)
+    pa_ = permanova(F, ar, strata=ds, seed=SEED, return_null=True)
+    if extra is not None:
+        tag = view.split(" ")[0]
+        extra[f"{tag}|null_F_dataset"] = pd_["null"]
+        extra[f"{tag}|null_F_arch"] = pa_["null"]
+        extra[f"{tag}|D2"] = pd_["D2"]
+        extra[f"{tag}|dataset"] = ds.astype(str)
+        extra[f"{tag}|arch"] = ar.astype(str)
+        extra[f"{tag}|run_id"] = info["run_id"].to_numpy().astype(str)
     return dict(view=view, n_runs=len(info), dim=F.shape[1],
                 permanova_F_dataset=pd_["pseudo_F"],
                 permanova_p_dataset=pd_["p_value"],
@@ -437,15 +457,25 @@ def pca2(F):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--skip-jackknife", action="store_true",
+                    help="reuse the existing jackknife tables (the slow "
+                         "stage); for iterating on the other outputs")
+    args = ap.parse_args()
+
     main_all, sim, suf = load()
     lines = ["# Robustness of the floor-clearing result\n"]
 
     # ---- 1 + 2 ----------------------------------------------------------
     print("floor definitions + family-wise correction:")
     sets = design_sets(main_all, sim, suf)
-    fd = floor_definition_table(sets)
+    samples = {}
+    fd = floor_definition_table(sets, samples=samples)
     fd.to_csv(os.path.join(TABDIR, "robustness_floor_definitions.csv"),
               index=False)
+    np.savez_compressed(os.path.join(TABDIR, "robustness_boot_samples.npz"),
+                        **samples)
     fs = floor_summary(fd)
     fs.to_csv(os.path.join(TABDIR, "robustness_floor_summary.csv"),
               index=False)
@@ -466,9 +496,14 @@ if __name__ == "__main__":
     lines.append(fs.round(3).to_string(index=False) + "\n")
 
     # ---- 3 --------------------------------------------------------------
-    print("leave-one-architecture-out:")
-    jk = jackknife_table(main_all, sim, suf)
-    jk.to_csv(os.path.join(TABDIR, "robustness_jackknife.csv"), index=False)
+    jk_path = os.path.join(TABDIR, "robustness_jackknife.csv")
+    if args.skip_jackknife and os.path.exists(jk_path):
+        print("leave-one-architecture-out: reusing", jk_path)
+        jk = pd.read_csv(jk_path)
+    else:
+        print("leave-one-architecture-out:")
+        jk = jackknife_table(main_all, sim, suf)
+        jk.to_csv(jk_path, index=False)
     js = jackknife_summary(jk)
     js.to_csv(os.path.join(TABDIR, "robustness_jackknife_summary.csv"),
               index=False)
@@ -487,11 +522,16 @@ if __name__ == "__main__":
         sr = sr[sr["dataset"].isin(MAIN) & np.isfinite(sr["ce_r2"])]
         info, F, clipped = symbolic_fingerprints(sr)
         info2, F2 = syntactic_fingerprints(sr)
-        st = pd.DataFrame([symbolic_stats(info, F, "functional (CE grid)"),
+        extra = {}
+        st = pd.DataFrame([symbolic_stats(info, F, "functional (CE grid)",
+                                          extra=extra),
                            symbolic_stats(info2, F2,
-                                          "syntactic (operator counts)")])
+                                          "syntactic (operator counts)",
+                                          extra=extra)])
         st.to_csv(os.path.join(TABDIR, "symbolic_clustering.csv"),
                   index=False)
+        np.savez_compressed(os.path.join(TABDIR, "symbolic_permanova.npz"),
+                            **extra)
         pcs, ev = pca2(F)
         out = info.copy()
         out["pc1"], out["pc2"] = pcs[:, 0], pcs[:, 1]

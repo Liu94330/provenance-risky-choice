@@ -407,23 +407,29 @@ def _pseudo_f(D2, labels):
     return (ssb / (a - 1)) / (ssw / max(n - a, 1))
 
 
-def permanova(F, labels, strata, n_perm=2000, seed=0):
+def permanova(F, labels, strata, n_perm=2000, seed=0, return_null=False):
     """Test the effect of `labels` on fingerprint matrix F [n, d], permuting
-    labels WITHIN each stratum (so the other factor is held fixed)."""
+    labels WITHIN each stratum (so the other factor is held fixed). With
+    `return_null` the permutation distribution of pseudo-F and the squared
+    distance matrix are returned too, for plotting."""
     rng = np.random.default_rng(seed)
     Z = (F - F.mean(0)) / (F.std(0) + 1e-9)
     D2 = ((Z[:, None, :] - Z[None, :, :]) ** 2).sum(-1)
     labels = np.asarray(labels); strata = np.asarray(strata)
     f_obs = _pseudo_f(D2, labels)
-    cnt = 0
-    for _ in range(n_perm):
+    null = np.empty(n_perm)
+    for k in range(n_perm):
         perm = labels.copy()
         for s in pd.unique(strata):
             idx = np.where(strata == s)[0]
             perm[idx] = rng.permutation(perm[idx])
-        if _pseudo_f(D2, perm) >= f_obs:
-            cnt += 1
-    return dict(pseudo_F=float(f_obs), p_value=(cnt + 1) / (n_perm + 1))
+        null[k] = _pseudo_f(D2, perm)
+    out = dict(pseudo_F=float(f_obs),
+               p_value=(int((null >= f_obs).sum()) + 1) / (n_perm + 1))
+    if return_null:
+        out["null"] = null
+        out["D2"] = D2
+    return out
 
 
 def silhouette_by(F, labels):

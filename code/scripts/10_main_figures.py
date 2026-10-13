@@ -218,15 +218,16 @@ if __name__ == "__main__":
         print("  fig5 transfer")
 
     # Robustness of the headline (11_robustness.py); filed as S9.
-    fd_, fs_, js_ = (table("robustness_floor_definitions.csv"),
+    fd_, fs_, jk_ = (table("robustness_floor_definitions.csv"),
                      table("robustness_floor_summary.csv"),
-                     table("robustness_jackknife_summary.csv"))
-    sym_, pca_ = (table("symbolic_clustering.csv"),
-                  table("symbolic_fingerprint_pca.csv"))
-    if all(x is not None for x in (fd_, fs_, js_, sym_, pca_)):
-        pmeta = os.path.join(tabdir, "symbolic_fingerprint_pca.json")
-        pmeta = json.load(open(pmeta)) if os.path.exists(pmeta) else None
-        supp_robustness(fd_, fs_, js_, sym_, pca_, figdir, pca_meta=pmeta)
+                     table("robustness_jackknife.csv"))
+    sym_ = table("symbolic_clustering.csv")
+    bootp = os.path.join(tabdir, "robustness_boot_samples.npz")
+    permp = os.path.join(tabdir, "symbolic_permanova.npz")
+    if (all(x is not None for x in (fd_, fs_, jk_, sym_))
+            and os.path.exists(bootp) and os.path.exists(permp)):
+        supp_robustness(fd_, fs_, jk_, sym_, np.load(bootp),
+                        np.load(permp), figdir)
         print("  figS9 robustness")
 
     if err is not None:

@@ -780,143 +780,342 @@ FLOOR_DEF_SHORT = {
 }
 
 
-def supp_robustness(fd, fs, js, sym, pca, figdir, pca_meta=None):
-    """Four panels a referee would ask for, from results/tables/robustness_*
-    and symbolic_*:
-      a  provenance: observed interval against every floor definition
-      b  how many read-outs clear, per floor definition and test (both factors)
-      c  leave-one-architecture-out
-      d  the distilled expressions as functions: PCA + PERMANOVA
-    """
-    with plt.rc_context(RC):
-        fig, axes = plt.subplots(1, 4, figsize=(13.6, 3.7),
-                                 gridspec_kw=dict(width_ratios=[1.25, 1, 1, 1]))
+def _kde(x, grid):
+    from scipy.stats import gaussian_kde
+    x = np.asarray(x, dtype=float)
+    x = x[np.isfinite(x)]
+    if len(x) < 5 or np.std(x) < 1e-9:
+        y = np.zeros_like(grid)
+        if len(x):
+            y[np.argmin(np.abs(grid - np.median(x)))] = 1.0
+        return y
+    return gaussian_kde(x, bw_method=0.25)(grid)
 
-        # --- a: provenance observed vs each floor definition --------------
-        ax = axes[0]
-        prov = fd[fd["factor"] == "provenance"]
-        defs = [d for d in FLOOR_DEF_SHORT if d in prov["floor_def"].unique()
-                and d not in ("sufficiency suite", "controlled suite")]
-        order = (prov[prov["floor_def"] == defs[0]]
-                 .sort_values(["family", "value"], ascending=[False, True]))
-        vals = order["value"].tolist()
-        greys = ["#d9d9d9", "#bdbdbd", "#a0a0a0", "#7a7a7a", "#4d4d4d"]
-        for yi, v in enumerate(vals):
-            r0 = order[order["value"] == v].iloc[0]
-            for k, dname in enumerate(defs):
-                r = prov[(prov["floor_def"] == dname)
-                         & (prov["value"] == v)].iloc[0]
-                off = (k - (len(defs) - 1) / 2) * 0.13
-                ax.plot([r["floor_lo"], r["floor_hi"]], [yi + off, yi + off],
-                        color=greys[k % len(greys)], lw=1.6, zorder=2,
-                        solid_capstyle="butt",
-                        label=FLOOR_DEF_SHORT[dname] if yi == 0 else None)
-            ax.plot([r0["obs_lo"], r0["obs_hi"]], [yi, yi], color=DS_C,
-                    lw=2.2, zorder=4, solid_capstyle="butt",
-                    label="observed (provenance)" if yi == 0 else None)
-            ax.plot([r0["obs"]], [yi], marker="D", ms=4, color=DS_C,
-                    markeredgecolor="white", markeredgewidth=0.5, zorder=5)
-        ax.set_yticks(range(len(vals)),
-                      [_pname(v).split(" (")[0].replace("_", " ")
-                       for v in vals], fontsize=5.4)
-        ax.invert_yaxis()
-        ax.set_xlim(0, 1.02)
-        ax.set_xlabel(r"$\omega^2$")
-        ax.set_title("provenance against five floor definitions",
-                     fontsize=6.4, color=MUTED, pad=4)
-        ax.legend(fontsize=5.2, loc="upper center", ncol=3, frameon=False,
-                  bbox_to_anchor=(0.5, -0.16), handlelength=1.6,
-                  columnspacing=1.0)
+
+ARCH_ORDER = ["LINEAR", "MLP_S", "MLP_L", "RESMLP", "SET", "TRANSFORMER",
+              "CPT_NET", "GBT"]
+ARCH_SHADES = dict(zip(ARCH_ORDER, plt.get_cmap("Greys")(
+    np.linspace(0.25, 0.95, len(ARCH_ORDER)))))
+READOUT_ORDER = ["alpha", "beta", "lam", "gamma_pos", "gamma_neg", "tau",
+                 "rare_event_index", "certainty_index", "reflection_index",
+                 "loss_aversion_kappa", "ev_consistency"]
+PROV_DEFS = ["respondents", "problem pool", "arm size", "largest component",
+             "composite (pool x size x respondents)"]
+ARCH_DEFS = ["sufficiency suite", "controlled suite"]
+
+
+def _short(v):
+    return _pname(v).split(" (")[0].replace("_", " ")
+
+
+def supp_robustness(fd, fs, jk, sym, boot, perm, figdir):
+    """Robustness of the headline, in six panels (11_robustness.py):
+      a  signed margin (observed lower bound - floor upper bound) of every
+         read-out under every floor definition, both factors
+      b  the same margins as a ladder over increasingly harsh provenance
+         floors, survivors of the harshest one named
+      c  bootstrap distributions behind the test: observed provenance effect
+         against the composite floor, per read-out
+      d  leave-one-architecture-out, per read-out
+      e  the distilled CE expressions as functions: distance matrix ordered
+         by training arm, then architecture
+      f  restricted-permutation nulls of PERMANOVA pseudo-F for both factors
+    `boot` and `perm` are the npz archives 11_robustness.py writes.
+    """
+    from matplotlib import gridspec
+    from matplotlib.colors import TwoSlopeNorm
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    fd = fd.copy()
+    fd["margin"] = fd["obs_lo"] - fd["floor_hi"]
+    prov = fd[fd["factor"] == "provenance"]
+    arch = fd[fd["factor"] == "architecture"]
+    rows = [v for v in READOUT_ORDER if v in prov["value"].unique()]
+    ylab = [_short(v) for v in rows]
+
+    with plt.rc_context(RC):
+        fig = plt.figure(figsize=(13.4, 7.6))
+        gs = gridspec.GridSpec(2, 3, figure=fig, height_ratios=[1.0, 1.0],
+                               width_ratios=[1.25, 1.0, 1.0], hspace=0.42,
+                               wspace=0.38)
+
+        # ---------------- a: margin matrix ------------------------------
+        ax = fig.add_subplot(gs[0, 0])
+        cols = PROV_DEFS + ARCH_DEFS
+        Mx = np.full((len(rows), len(cols)), np.nan)
+        clears = np.zeros_like(Mx, dtype=bool)
+        for j, d in enumerate(cols):
+            src = prov if d in PROV_DEFS else arch
+            sub = src[src["floor_def"] == d].set_index("value")
+            for i, v in enumerate(rows):
+                if v in sub.index:
+                    Mx[i, j] = sub.loc[v, "margin"]
+                    clears[i, j] = bool(sub.loc[v, "clears_interval"])
+        lim = np.nanmax(np.abs(Mx))
+        im = ax.imshow(Mx, cmap="RdBu", norm=TwoSlopeNorm(0, -lim, lim),
+                       aspect="auto", interpolation="nearest")
+        for i in range(len(rows)):
+            for j in range(len(cols)):
+                v = Mx[i, j]
+                if np.isnan(v):
+                    continue
+                ax.text(j, i, f"{v:+.2f}", ha="center", va="center",
+                        fontsize=5.0, fontweight="bold" if clears[i, j]
+                        else "normal",
+                        color="white" if abs(v) > 0.45 * lim else INK)
+        ax.set_xticks(range(len(cols)),
+                      [FLOOR_DEF_SHORT.get(c, c) for c in cols], fontsize=5.6,
+                      rotation=35, ha="right")
+        ax.set_yticks(range(len(rows)), ylab, fontsize=5.6)
+        ax.axvline(len(PROV_DEFS) - 0.5, color=INK, lw=1.2)
+        ax.axhline(5.5, color=INK, lw=0.6, ls=":")
+        ax.text((len(PROV_DEFS) - 1) / 2, -1.05, "provenance floors",
+                ha="center", va="bottom", fontsize=6.2, color=DS_C)
+        ax.text(len(PROV_DEFS) + 0.5, -1.05, "architecture floors",
+                ha="center", va="bottom", fontsize=6.2, color=AR_C)
+        for sp in ax.spines.values():
+            sp.set_visible(False)
+        ax.tick_params(length=0)
+        cb = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
+        cb.set_label("margin", fontsize=5.8)
+        cb.ax.tick_params(labelsize=5.2)
+        ax.set_title("margin = observed low $-$ floor high;  bold = clears",
+                     fontsize=6.2, color=MUTED, pad=16)
         _tag(ax, "a")
 
-        # --- b: counts per definition and test ----------------------------
-        ax = axes[1]
-        tests = [("clears_interval", "interval rule"),
-                 ("clears_holm", "Holm-adjusted p < .05")]
-        rows = []
-        for fac in ["provenance", "architecture"]:
-            for _, r in fs[fs["factor"] == fac].iterrows():
-                rows.append((fac, FLOOR_DEF_SHORT.get(r["floor_def"],
-                                                      r["floor_def"]),
-                             r[tests[0][0]], r[tests[1][0]], r["n_readouts"]))
-        y = np.arange(len(rows))
-        for yi, (fac, dname, c_int, c_holm, n) in enumerate(rows):
-            col = DS_C if fac == "provenance" else AR_C
-            ax.barh(yi - 0.18, c_int, height=0.34, color=col, alpha=0.9,
-                    zorder=3)
-            ax.barh(yi + 0.18, c_holm, height=0.34, color=col, alpha=0.45,
-                    zorder=3)
-        ax.set_yticks(y, [f"{'prov.' if f == 'provenance' else 'arch.'}: {d}"
-                          for f, d, *_ in rows], fontsize=5.6)
-        for lab, (f, *_) in zip(ax.get_yticklabels(), rows):
-            lab.set_color(DS_C if f == "provenance" else AR_C)
-        n_tot = int(fs["n_readouts"].max())
-        ax.axvline(n_tot, color=INK, lw=0.8, ls=":", zorder=4)
-        ax.set_xlim(0, n_tot + 0.6)
-        ax.set_xlabel(f"read-outs clearing their floor (of {n_tot})")
-        ax.invert_yaxis()
-        # family separators / labels
-        n_prov = sum(1 for r in rows if r[0] == "provenance")
-        ax.axhline(n_prov - 0.5, color=FAINT, lw=0.7, ls=":")
-        from matplotlib.patches import Patch
-        ax.legend(handles=[Patch(color=INK, alpha=0.9, label=tests[0][1]),
-                           Patch(color=INK, alpha=0.4, label=tests[1][1])],
-                  fontsize=5.4, loc="lower right", frameon=False)
-        ax.set_title("floor definition x test", fontsize=6.4, color=MUTED,
-                     pad=4)
+        # ---------------- b: survival ladder ----------------------------
+        ax = fig.add_subplot(gs[0, 1])
+        xs = np.arange(len(PROV_DEFS))
+        comp = prov[prov["floor_def"] == PROV_DEFS[-1]].set_index("value")
+        survivors = [v for v in rows if comp.loc[v, "clears_interval"]]
+        hi_cols = ["#0072B2", "#009E73", "#CC79A7", "#E69F00"]
+        for v in rows:
+            m = [prov[(prov["floor_def"] == d) & (prov["value"] == v)]
+                 ["margin"].iloc[0] for d in PROV_DEFS]
+            if v in survivors:
+                c = hi_cols[survivors.index(v) % len(hi_cols)]
+                ax.plot(xs, m, color=c, lw=1.8, marker="o", ms=3.6,
+                        zorder=5, markeredgecolor="white",
+                        markeredgewidth=0.5)
+                ax.annotate(_short(v), (xs[-1], m[-1]),
+                            xytext=(5, 0), textcoords="offset points",
+                            fontsize=5.8, color=c, va="center", ha="left")
+            else:
+                ax.plot(xs, m, color=FAINT, lw=1.0, marker="o", ms=2.4,
+                        zorder=3, alpha=0.9)
+        ax.axhline(0, color=INK, lw=0.9, zorder=4)
+        ax.axhspan(-1, 0, color="#f3f3f3", zorder=0)
+        med = fs[fs["factor"] == "provenance"].set_index("floor_def")
+        ax.set_xticks(xs, [f"{FLOOR_DEF_SHORT[d]}\n(floor {med.loc[d, 'median_floor']:.2f})"
+                           for d in PROV_DEFS], fontsize=5.4)
+        ax.set_ylabel("observed low $-$ floor high")
+        ax.set_ylim(min(-0.62, prov["margin"].min() - 0.04),
+                    prov["margin"].max() + 0.06)
+        ax.set_xlim(-0.3, len(PROV_DEFS) - 0.2)
+        counts = [int(med.loc[d, "clears_interval"]) for d in PROV_DEFS]
+        for x, n in zip(xs, counts):
+            ax.text(x, ax.get_ylim()[1] - 0.01, f"{n}/11", ha="center",
+                    va="top", fontsize=5.8, color=DS_C, fontweight="bold")
+        ax.set_title("provenance as the floor gets harsher",
+                     fontsize=6.4, color=MUTED, pad=4)
         _tag(ax, "b")
 
-        # --- c: leave-one-architecture-out --------------------------------
-        ax = axes[2]
-        j = js.copy()
-        labels = ["all" if l == "none" else l for l in j["left_out"]]
-        x = np.arange(len(j))
-        ax.plot(x, j["provenance_clears"], marker="o", ms=4.5, color=DS_C,
-                lw=1.2, zorder=4, label="provenance, pool floor")
-        ax.plot(x, j["provenance_clears_composite"], marker="o", ms=4.5,
-                color=DS_C, lw=1.2, ls="--", mfc="white", zorder=4,
-                label="provenance, composite floor")
-        ax.plot(x, j["architecture_clears"], marker="s", ms=4.5, color=AR_C,
-                lw=1.2, zorder=4, label="architecture")
-        ax.axhline(j["n_readouts"].max(), color=INK, lw=0.8, ls=":")
-        ax.set_xticks(x, labels, rotation=55, ha="right", fontsize=5.4)
-        ax.set_ylim(-0.4, j["n_readouts"].max() + 0.8)
-        ax.set_ylabel("read-outs clearing their floor")
-        ax.set_xlabel("architecture left out")
-        ax.legend(fontsize=5.3, loc="center right", frameon=False)
-        ax.set_title("no single architecture carries the result",
+        # ---------------- c: ridgeline of bootstrap distributions ------
+        ax = fig.add_subplot(gs[0, 2])
+        grid = np.linspace(0, 1, 400)
+        step = 1.0
+        pk = prov[prov["floor_def"] == "problem pool"].set_index("value")
+        ck = comp
+        for i, v in enumerate(rows):
+            y0 = (len(rows) - 1 - i) * step
+            obs = boot[f"{v}|obs_ds"]
+            flo = boot[f"{v}|floor_ds|{PROV_DEFS[-1]}"]
+            poo = boot[f"{v}|floor_ds|problem pool"]
+            for arr, col, al, z in [(poo, "#cfcfcf", 0.9, 2),
+                                    (flo, "#6e6e6e", 0.85, 3),
+                                    (obs, DS_C, 0.75, 4)]:
+                k = _kde(arr, grid)
+                k = k / max(k.max(), 1e-9) * 0.92 * step
+                ax.fill_between(grid, y0, y0 + k, color=col, alpha=al,
+                                lw=0, zorder=z)
+                ax.plot(grid, y0 + k, color=col, lw=0.5, zorder=z + 0.1)
+            p = ck.loc[v, "p_holm"]
+            tag = (f"$p_{{\\mathrm{{Holm}}}}$ {'<0.001' if p < 1e-3 else f'= {p:.3f}'}")
+            ax.text(1.0, y0 + 0.12 * step, tag, ha="right", va="bottom",
+                    fontsize=5.0, color=INK if ck.loc[v, "clears_interval"]
+                    else MUTED)
+        ax.set_yticks([(len(rows) - 1 - i) * step for i in range(len(rows))],
+                      ylab, fontsize=5.6)
+        ax.set_ylim(-0.1, len(rows) * step + 0.1)
+        ax.set_xlim(0, 1)
+        ax.set_xlabel(r"$\omega^2$")
+        ax.axhline(5 * step - 0.05, color=FAINT, lw=0.7, ls=":")
+        ax.legend(handles=[Patch(color=DS_C, alpha=0.75,
+                                 label="observed provenance effect"),
+                           Patch(color="#6e6e6e", label="composite floor"),
+                           Patch(color="#cfcfcf", label="problem-pool floor")],
+                  fontsize=5.2, loc="upper center", frameon=False, ncol=3,
+                  bbox_to_anchor=(0.5, -0.13), columnspacing=1.0,
+                  handlelength=1.4)
+        ax.set_title("bootstrap distributions behind the test",
                      fontsize=6.4, color=MUTED, pad=4)
         _tag(ax, "c")
 
-        # --- d: symbolic expressions as functions -------------------------
-        ax = axes[3]
-        for ds, sub in pca.groupby("dataset"):
-            for ar, s2 in sub.groupby("arch"):
-                ax.scatter(s2["pc1"], s2["pc2"], s=22,
-                           c=DATASET_COLORS.get(ds, MUTED),
-                           marker=ARCH_MARKERS.get(ar, "o"), alpha=0.85,
-                           linewidths=0.4, edgecolors="white", zorder=3)
-        for ds in pca["dataset"].unique():
-            sub = pca[pca["dataset"] == ds]
-            if len(sub) > 2:
-                _ellipse(ax, sub["pc1"].to_numpy(), sub["pc2"].to_numpy(),
-                         DATASET_COLORS.get(ds, MUTED))
-        ev = (pca_meta or {}).get("explained", [np.nan, np.nan])
-        ax.set_xlabel(f"PC1 ({100 * ev[0]:.0f}%)")
-        ax.set_ylabel(f"PC2 ({100 * ev[1]:.0f}%)")
-        fsym = sym[sym["view"].str.startswith("functional")].iloc[0]
-        ax.set_title(
-            "distilled CE(x, p) as functions:  PERMANOVA "
-            f"$F$ provenance {fsym['permanova_F_dataset']:.1f}, "
-            f"architecture {fsym['permanova_F_arch']:.1f}",
-            fontsize=6.0, color=MUTED, pad=4)
-        from matplotlib.lines import Line2D
-        h = [Line2D([], [], color=DATASET_COLORS[d], marker="o", ls="",
-                    ms=4, label=DATASET_SHORT.get(d, d))
-             for d in ["c13k_exp", "c13k_desc", "cpc18_exp", "cpc18_desc"]
-             if d in pca["dataset"].unique()]
-        ax.legend(handles=h, fontsize=5.2, loc="best", frameon=False)
+        # ---------------- d: jackknife dot matrix ----------------------
+        ax = fig.add_subplot(gs[1, 0])
+        lo_order = ["none"] + ARCH_ORDER
+        lo_order = [l for l in lo_order if l in jk["left_out"].unique()]
+        for j, lo in enumerate(lo_order):
+            sub = jk[jk["left_out"] == lo].set_index("value")
+            for i, v in enumerate(rows):
+                if v not in sub.index:
+                    continue
+                r = sub.loc[v]
+                if r["ds_clears"]:
+                    ax.scatter(j, i, s=46, color=DS_C, zorder=4,
+                               edgecolors="white", linewidths=0.5)
+                else:
+                    ax.scatter(j, i, s=46, facecolors="white",
+                               edgecolors=FAINT, linewidths=0.8, zorder=3)
+                if r["ds_clears_composite"]:
+                    ax.scatter(j, i, s=120, facecolors="none",
+                               edgecolors=INK, linewidths=0.9, zorder=5)
+                if r["arch_clears"]:
+                    ax.scatter(j, i, s=22, marker="s", color=AR_C, zorder=6,
+                               edgecolors="white", linewidths=0.4)
+            n_p = int(sub["ds_clears"].sum())
+            n_c = int(sub["ds_clears_composite"].sum())
+            n_a = int(sub["arch_clears"].sum())
+            ax.text(j, -1.0, f"{n_p}", ha="center", va="center", fontsize=6.0,
+                    color=DS_C, fontweight="bold")
+            ax.text(j, -1.7, f"{n_c}", ha="center", va="center", fontsize=5.4,
+                    color=INK)
+            ax.text(j, -2.4, f"{n_a}", ha="center", va="center", fontsize=5.4,
+                    color=AR_C)
+        ax.text(-0.9, -1.0, "pool", ha="right", va="center", fontsize=5.4,
+                color=DS_C)
+        ax.text(-0.9, -1.7, "composite", ha="right", va="center",
+                fontsize=5.4, color=INK)
+        ax.text(-0.9, -2.4, "architecture", ha="right", va="center",
+                fontsize=5.4, color=AR_C)
+        ax.set_xticks(range(len(lo_order)),
+                      ["all" if l == "none" else l for l in lo_order],
+                      fontsize=5.4, rotation=45, ha="right")
+        ax.set_yticks(range(len(rows)), ylab, fontsize=5.6)
+        ax.set_ylim(len(rows) - 0.4, -3.0)
+        ax.set_xlim(-0.7, len(lo_order) - 0.3)
+        ax.axhline(5.5, color=FAINT, lw=0.7, ls=":")
+        ax.axhline(-0.5, color=INK, lw=0.6)
+        for sp in ax.spines.values():
+            sp.set_visible(False)
+        ax.tick_params(length=0)
+        ax.set_xlabel("architecture left out")
+        ax.legend(handles=[
+            Line2D([], [], marker="o", color=DS_C, ls="", ms=5.5,
+                   label="provenance clears, pool floor"),
+            Line2D([], [], marker="o", mfc="none", mec=INK, ls="", ms=8,
+                   label="also clears composite floor"),
+            Line2D([], [], marker="s", color=AR_C, ls="", ms=4,
+                   label="architecture clears")],
+            fontsize=5.2, loc="lower left", bbox_to_anchor=(0.0, -0.42),
+            ncol=3, frameon=False, handletextpad=0.4, columnspacing=1.0)
+        ax.set_title("leave one architecture out (counts above)",
+                     fontsize=6.4, color=MUTED, pad=4)
         _tag(ax, "d")
 
-        fig.tight_layout(w_pad=1.6)
+        # ---------------- e: distance matrix ---------------------------
+        ax = fig.add_subplot(gs[1, 1])
+        D = np.sqrt(np.maximum(perm["functional|D2"], 0))
+        dsl = perm["functional|dataset"].astype(str)
+        arl = perm["functional|arch"].astype(str)
+        ds_order = [d for d in ["c13k_exp", "c13k_desc", "cpc18_exp",
+                                "cpc18_desc"] if d in set(dsl)]
+        key = [(ds_order.index(d), ARCH_ORDER.index(a) if a in ARCH_ORDER
+                else 99) for d, a in zip(dsl, arl)]
+        order = np.argsort(np.array([k[0] * 100 + k[1] for k in key]),
+                           kind="stable")
+        Do = D[np.ix_(order, order)]
+        n = len(order)
+        im = ax.imshow(Do, cmap="magma_r", interpolation="nearest",
+                       aspect="equal", zorder=2)
+        bounds = np.cumsum([int((dsl == d).sum()) for d in ds_order])
+        for b in bounds[:-1]:
+            ax.axhline(b - 0.5, color="white", lw=1.0, zorder=3)
+            ax.axvline(b - 0.5, color="white", lw=1.0, zorder=3)
+        # colour strips for arm (outer) and architecture (inner)
+        strip = 2.2
+        for k, idx in enumerate(order):
+            ax.add_patch(plt.Rectangle((-2 * strip - 1.0, k - 0.5), strip, 1,
+                                       color=DATASET_COLORS.get(dsl[idx],
+                                                                MUTED),
+                                       lw=0, clip_on=False, zorder=4))
+            ax.add_patch(plt.Rectangle((-strip - 0.6, k - 0.5), strip, 1,
+                                       color=ARCH_SHADES.get(arl[idx], MUTED),
+                                       lw=0, clip_on=False, zorder=4))
+            ax.add_patch(plt.Rectangle((k - 0.5, -2 * strip - 1.0), 1, strip,
+                                       color=DATASET_COLORS.get(dsl[idx],
+                                                                MUTED),
+                                       lw=0, clip_on=False, zorder=4))
+            ax.add_patch(plt.Rectangle((k - 0.5, -strip - 0.6), 1, strip,
+                                       color=ARCH_SHADES.get(arl[idx], MUTED),
+                                       lw=0, clip_on=False, zorder=4))
+        starts = np.concatenate([[0], bounds[:-1]])
+        for d, s0, s1 in zip(ds_order, starts, bounds):
+            ax.text((s0 + s1) / 2 - 0.5, n + 1.5, DATASET_SHORT.get(d, d),
+                    ha="center", va="top", fontsize=5.4,
+                    color=DATASET_COLORS.get(d, MUTED))
+        ax.set_xticks([]); ax.set_yticks([])
+        ax.set_xlim(-2 * strip - 1.2, n - 0.5)
+        ax.set_ylim(n - 0.5, -2 * strip - 1.2)
+        for sp in ax.spines.values():
+            sp.set_visible(False)
+        cb = fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02)
+        cb.set_label("distance between recovered CE(x, p) functions",
+                     fontsize=5.6)
+        cb.ax.tick_params(labelsize=5.2)
+        ax.legend(handles=[Patch(color=ARCH_SHADES[a], label=a)
+                           for a in ARCH_ORDER],
+                  fontsize=4.8, loc="upper left", bbox_to_anchor=(-0.02, -0.08),
+                  ncol=4, frameon=False, handlelength=1.0, columnspacing=0.8,
+                  title="inner strip: architecture", title_fontsize=5.2)
+        fsym = sym[sym["view"].str.startswith("functional")].iloc[0]
+        ax.set_title(f"{n} runs ordered by arm, then architecture",
+                     fontsize=6.4, color=MUTED, pad=16)
+        _tag(ax, "e")
+
+        # ---------------- f: permutation nulls -------------------------
+        ax = fig.add_subplot(gs[1, 2])
+        for view, ls in [("functional", "-"), ("syntactic", ":")]:
+            for fac, col, key in [("provenance", DS_C, "dataset"),
+                                  ("architecture", AR_C, "arch")]:
+                null = perm[f"{view}|null_F_{key}"]
+                row = sym[sym["view"].str.startswith(view)].iloc[0]
+                fobs = row[f"permanova_F_{key}"]
+                pval = row[f"permanova_p_{key}"]
+                bins = np.linspace(0.4, max(3.6, fobs + 0.2), 56)
+                ax.hist(null, bins=bins, histtype="step", color=col, lw=1.1,
+                        ls=ls, density=True, zorder=3,
+                        alpha=1.0 if view == "functional" else 0.7)
+                ax.axvline(fobs, color=col, lw=1.6 if view == "functional"
+                           else 1.0, ls=ls, zorder=4)
+                if view == "functional":
+                    import matplotlib.transforms as mtr
+                    ax.text(fobs, 0.80 if key == "dataset" else 0.62,
+                            f" {fac}\n $F$ = {fobs:.2f}\n $p$ "
+                            f"{'< 0.001' if pval < 1e-3 else f'= {pval:.3f}'}",
+                            transform=mtr.blended_transform_factory(
+                                ax.transData, ax.transAxes),
+                            fontsize=5.4, color=col, va="top", ha="left")
+        ax.set_xlabel("PERMANOVA pseudo-$F$")
+        ax.set_ylabel("density of the permutation null")
+        ax.legend(handles=[Line2D([], [], color=INK, ls="-",
+                                  label="functional view (CE grid)"),
+                           Line2D([], [], color=INK, ls=":",
+                                  label="syntactic view (operators)")],
+                  fontsize=5.2, loc="upper right", frameon=False)
+        ax.set_title("2,000 permutations within strata of the other factor",
+                     fontsize=6.4, color=MUTED, pad=4)
+        _tag(ax, "f")
+
         _save(fig, figdir, "supp_robustness.pdf")
